@@ -1,0 +1,55 @@
+[
+{
+	"nomEntite":"TypeCommunaute",
+	"listeValeur": [
+	{"id":3,"libelle": "Agios"},
+	{ "id":2, "libelle":"Colocation"},
+	{ "id":1, "libelle":"Famille"} ]
+},
+{
+	"nomEntite":"TypeEtatMouvement",
+	"listeValeur": [
+	{ "id":3, "libelle":"annulé"},
+	{ "id":2, "libelle":"déclenché"},
+	{ "id":1, "libelle":"prévu"},
+	{ "id":4, "libelle":"réalisé"}]
+},
+{
+	"nomEntite":"TypeMeteo",
+	"listeValeur": [
+	{ "id":3, "libelle":"averse.png"},
+	{ "id":4, "libelle":"inconnu.png"},
+	{ "id":2, "libelle":"mitige.png"},
+	{ "id":1, "libelle":"soleil.png"}]
+},
+{
+	"nomEntite":"TypeMouvement",
+	"listeValeur": [
+	{ "id":3, "libelle":"Appel de fond"},
+	{ "id":2, "libelle":"Don"},
+        { "id":5, "libelle":"Demande de don"},
+        { "id":4, "libelle":"Demande de prêt"},
+	{ "id":1, "libelle":"Prêt"}]
+},	
+{
+	"nomEntite":"TypePosition",
+	"listeValeur": [
+	{ "id":3, "libelle":"Je souhaite aidé et être aidé"},
+	{ "id":1, "libelle":"Je souhaite uniquement aidé"},
+	{ "id":2, "libelle":"Je souhaite uniquement être aidé"}]
+},
+{
+	"nomEntite":"TypeRole",
+	"listeValeur": [
+	{ "id":1, "libelle":"Gestionnaire"},
+	{ "id":4, "libelle":"invitation en attente"},
+	{ "id":2, "libelle":"Participant"},
+	{ "id":3, "libelle":"Super Gestionnaire"}]
+},
+{
+	"nomEntite":"TypeVisibiliteProfil",
+	"listeValeur": [
+	{ "id":3, "libelle":"A tout le monde"},
+	{ "id":1, "libelle":"Ne pas montrer mes comptes"},
+	{ "id":2, "libelle":"Uniquement au gestionnaire"}]
+}]
