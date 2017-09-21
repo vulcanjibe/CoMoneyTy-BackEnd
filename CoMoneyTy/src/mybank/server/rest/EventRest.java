@@ -1,5 +1,10 @@
 package mybank.server.rest;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -7,7 +12,6 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -16,6 +20,9 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
+import org.glassfish.jersey.media.multipart.FormDataParam;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -26,7 +33,6 @@ import mybank.server.rest.util.Accesseur;
 import mybank.server.rest.util.ConnexionUser;
 import mybank.server.rest.util.Reponse;
 import mybank.server.rest.util.Utilitaire;
-
 @Path("/event")
 public class EventRest {
 
@@ -228,5 +234,23 @@ public class EventRest {
             return Reponse.reponseKO(e);
         }
     }
+    @POST
+    @Path("upload")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    public Response uploadFile(@FormDataParam("file") InputStream uploadedInputStream,
+                               @FormDataParam("file") FormDataContentDisposition fileDetails) throws Exception {
 
+
+        System.out.println(fileDetails.getFileName());
+        byte[] buffer = new byte[uploadedInputStream.available()];
+        //File targetFile = new File("src/main/resources/targetFile.tmp");
+        File targetFile = new File("../standalone/deployments/CoMoneyTy-0.0.1-SNAPSHOT.war/upload-image/event/"+fileDetails.getFileName()); 
+        java.nio.file.Files.copy(
+        		uploadedInputStream, 
+          targetFile.toPath(), 
+          StandardCopyOption.REPLACE_EXISTING);
+       
+        uploadedInputStream.close();
+        return Response.ok().build();
+    }
 }
