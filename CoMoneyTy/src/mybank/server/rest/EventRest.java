@@ -1,9 +1,7 @@
 package mybank.server.rest;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,9 +24,11 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import mybank.server.beans.Depense;
 import mybank.server.beans.Event;
 import mybank.server.beans.LienEventUser;
 import mybank.server.beans.User;
+import mybank.server.beans.javascript.UserAvecDepense;
 import mybank.server.rest.util.Accesseur;
 import mybank.server.rest.util.ConnexionUser;
 import mybank.server.rest.util.Reponse;
@@ -87,6 +87,8 @@ public class EventRest {
             connexionUser = ConnexionUser.verificationConnexionUser(headers);
             String clauseWhere =new String(data, "UTF-8");
             List<User> liste = (List<User>) Accesseur.getListeFiltre(User.class,clauseWhere );
+            
+            
 
             // Traitement de la log
             Utilitaire.loggingRest(this.getClass(), "getListe", data, connexionUser.getUser());
@@ -205,8 +207,33 @@ public class EventRest {
             for(LienEventUser lien : liste) {
             	listeUser.add((User) Accesseur.get(User.class, lien.getUserId()));
             }
+            
+            // Je recupere toutes les depenses de cet event
+            List<Depense> listeDepense = (List<Depense>) Accesseur.getListeFiltre(Depense.class, "idEvent='"+idEvent+"'");
+            double montantEvent = 0;
+            for(Depense depense : listeDepense)
+        	{
+            	montantEvent+=depense.getMontant();
+        	}
+            ArrayList<UserAvecDepense> listeUserAvecDepense = new ArrayList<>();
+            for(User user : listeUser)
+            {
+            	double montantPaye=0;
+            	double montantDu=0;
+            	for(Depense depense : listeDepense)
+            	{
+            		if(depense.getIdPayeur().equals(user.getId()))
+            			montantPaye+=depense.getMontant();
+            	}
+            	montantDu=(montantEvent-montantPaye)/listeUser.size();
+            	UserAvecDepense userAvecDepense = new UserAvecDepense(user);
+            	userAvecDepense.setaPaye(montantPaye);
+            	userAvecDepense.setDoit(montantDu);
+            	listeUserAvecDepense.add(userAvecDepense);
+            }
+            
             // Traitement de la log
-            return Reponse.getResponseOK(listeUser);
+            return Reponse.getResponseOK(listeUserAvecDepense);
         } catch (Exception e) {
             // Traitement de l'exception
             Utilitaire.exceptionRest(e, this.getClass(), "/{id}/users", "/"+idEvent+"/users", connexionUser.getUser());
@@ -242,14 +269,14 @@ public class EventRest {
 
 
         System.out.println(fileDetails.getFileName());
-        byte[] buffer = new byte[uploadedInputStream.available()];
+        //byte[] buffer = new byte[uploadedInputStream.available()];
         //File targetFile = new File("src/main/resources/targetFile.tmp");
-        File targetFile = new File("../standalone/deployments/CoMoneyTy-0.0.1-SNAPSHOT.war/upload-image/event/"+fileDetails.getFileName()); 
-        java.nio.file.Files.copy(
+        File targetFile = new File("../standalone/deployments/Image.war/event/"+fileDetails.getFileName()); 
+        long res = java.nio.file.Files.copy(
         		uploadedInputStream, 
           targetFile.toPath(), 
           StandardCopyOption.REPLACE_EXISTING);
-       
+        System.out.println("WRITE = "+res+" dans "+targetFile.toPath());
         uploadedInputStream.close();
         return Response.ok().build();
     }

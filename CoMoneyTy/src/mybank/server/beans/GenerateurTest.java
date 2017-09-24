@@ -89,8 +89,8 @@ public class GenerateurTest {
 				double montant = Math.random()*150;
 		//		if(Math.random()>0.5)
 		//			montant=-montant;
-				Mouvement mvt = new Mouvement(emetteur, destinataire, montant, emetteur.getPrenom()+" -> "+destinataire.getPrenom()+" : "+montant+" �", donneDate(), event);
-				listeMvt.add(mvt);
+		//		Mouvement mvt = new Mouvement(emetteur.getId(), destinataire.getId(), montant, emetteur.getPrenom()+" -> "+destinataire.getPrenom()+" : "+montant+" �", donneDate(), event);
+		//		listeMvt.add(mvt);
 			}
 		}
 		
@@ -122,10 +122,10 @@ public class GenerateurTest {
 			Accesseur.save(event);
 		}
 
-		for(Mouvement mvt : listeMvt)
+/*		for(Mouvement mvt : listeMvt)
 		{
 			Accesseur.save(mvt);
-		}
+		} */
 
 		for(LienEventUser lien : listeLien)
 		{

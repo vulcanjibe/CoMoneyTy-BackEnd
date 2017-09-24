@@ -22,6 +22,7 @@ import javax.ws.rs.core.UriInfo;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import mybank.server.beans.Depense;
 import mybank.server.beans.Event;
 import mybank.server.beans.LienEventUser;
 import mybank.server.beans.Relation;
@@ -119,7 +120,7 @@ public class UserRest {
         }
     }
 
-    @PUT
+    @POST
     @Path("/save")
     @Produces(MediaType.APPLICATION_JSON)
     public Response save(@Context HttpHeaders headers, @Context UriInfo uriInfo, byte[] data) {
@@ -127,12 +128,19 @@ public class UserRest {
         ConnexionUser connexionUser = null;
         try {
             // Vérification de l'accès depuis un user connecté
-            connexionUser = ConnexionUser.verificationConnexionUser(headers);
+         
             User aUser = mapper.readValue(new String(data, "UTF-8"), User.class);
+            if(aUser.getUrlAvatar()==null)
+            	aUser.setPrenom("standard.png");
             Accesseur.save(aUser);
+            String key = UUID.randomUUID().toString().toUpperCase();
+            connexionUser = ConnexionUser.connect(key, aUser);
+            HashMap<String, Object> maHash = new HashMap<String, Object>();
+            maHash.put("id", key);
+            maHash.put("user", aUser);
             // Traitement de la log
             Utilitaire.loggingRest(this.getClass(), "save", data, connexionUser.getUser());
-           return Reponse.getResponseOK(aUser);
+           return Reponse.getResponseOK(maHash);
         } catch (Exception e) {
             // Traitement de l'exception
             Utilitaire.exceptionRest(e, this.getClass(), "save", data, connexionUser.getUser());
@@ -178,6 +186,17 @@ public class UserRest {
             for(LienEventUser lien : liste) {
             	listeEvent.add((Event) Accesseur.get(Event.class, lien.getEventId()));
             }
+            
+            // Pour chaque event je calcule le montant
+            for(Event event : listeEvent)
+            {
+            	List<Depense> listeDepense = (List<Depense>) Accesseur.getListeFiltre(Depense.class, "idEvent='"+event.getId()+"'");
+            	double montantEvent = 0;
+            	for(Depense depense : listeDepense)
+            		montantEvent+=depense.getMontant();
+            	event.setMontant(montantEvent);
+            }
+            
             // Traitement de la log
             return Reponse.getResponseOK(listeEvent);
         } catch (Exception e) {
@@ -272,6 +291,61 @@ public class UserRest {
         }
     }
 
+    
+    @POST
+    @Path("/login-facebook")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Object loginFacebook(@Context HttpHeaders headers, @Context UriInfo uriInfo,
+            byte[] data) {
+
+        ObjectMapper mapper = new ObjectMapper();
+        ConnexionUser connexionUser = null;
+        User aUser = null;
+        try {
+
+            aUser = mapper.readValue(new String(data, "UTF-8"), User.class);
+           
+            
+            List<User> list = (List<User>)Accesseur.getListeFiltre(
+                    User.class, "id='"+aUser.getId()+"'");
+
+            if (list.isEmpty()) {
+               // Cr�ation du user facebook
+            	if(aUser.getEmail()==null) {
+            		aUser.setEmail("inconnu");
+            		aUser.setLogin("Facebook-"+aUser.getNom()+"-"+aUser.getPrenom());
+            	}
+            	else {
+            		aUser.setLogin(aUser.getEmail());
+            	}
+            	
+            	Accesseur.save(aUser);
+            } else
+            {
+            	aUser=list.get(0);
+            }
+
+            String key = UUID.randomUUID().toString().toUpperCase();
+
+            /* Sauvegarde du user dans la LISTE_USER */
+            connexionUser = ConnexionUser.connect(key, aUser);
+
+            HashMap<String, Object> maHash = new HashMap<String, Object>();
+            maHash.put("id", key);
+            maHash.put("user", aUser);
+
+            // Traitement de la log
+            Utilitaire.loggingRest(this.getClass(), "login", "",
+                    connexionUser.getUser());
+            //return maHash;
+            return Reponse.getResponseOK(maHash);
+        } catch (Exception e) {
+            // Traitement de l'exception
+            Utilitaire.exceptionRest(e, this.getClass(), "login", "", aUser);
+            return Reponse.reponseKO(e);
+        }
+    }
+    
     @POST
     @Path("/logout")
     @Produces(MediaType.APPLICATION_JSON)

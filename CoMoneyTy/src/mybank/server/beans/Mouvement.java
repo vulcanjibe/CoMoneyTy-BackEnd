@@ -5,29 +5,30 @@ import java.util.UUID;
 
 public class Mouvement implements ObjetId {
 	String id;
-	User emetteur;
-	User destinataire;
+	String idEmetteur;
+	String idDestinataire;
 	double montant;
 	String commentaire;
 	Date date;
-	Event event;
+	String idEvent;
 	public String getId() {
 		return id;
 	}
 	public void setId(String id) {
 		this.id = id;
 	}
-	public User getEmetteur() {
-		return emetteur;
+
+	public String getIdEmetteur() {
+		return idEmetteur;
 	}
-	public void setEmetteur(User emetteur) {
-		this.emetteur = emetteur;
+	public void setIdEmetteur(String idEmetteur) {
+		this.idEmetteur = idEmetteur;
 	}
-	public User getDestinataire() {
-		return destinataire;
+	public String getIdDestinataire() {
+		return idDestinataire;
 	}
-	public void setDestinataire(User destinataire) {
-		this.destinataire = destinataire;
+	public void setIdDestinataire(String idDestinataire) {
+		this.idDestinataire = idDestinataire;
 	}
 	public double getMontant() {
 		return montant;
@@ -47,16 +48,16 @@ public class Mouvement implements ObjetId {
 	public void setDate(Date date) {
 		this.date = date;
 	}
-	public Mouvement(User emetteur, User destinataire, double montant,
-			String commentaire, Date date,Event event) {
+	public Mouvement(String idEmetteur, String idDestinataire, double montant,
+			String commentaire, Date date,String idEvent) {
 		super();
 		this.id = UUID.randomUUID().toString();
-		this.emetteur = emetteur;
-		this.destinataire = destinataire;
+		this.idEmetteur = idEmetteur;
+		this.idDestinataire = idDestinataire;
 		this.montant = montant;
 		this.commentaire = commentaire;
 		this.date = date;
-		this.event = event;
+		this.idEvent = idEvent;
 	}
 	public Mouvement() {
 		this.id = UUID.randomUUID().toString();
@@ -66,11 +67,12 @@ public class Mouvement implements ObjetId {
 		// TODO Auto-generated method stub
 		return this.getClass().getName();
 	}
-	public Event getEvent() {
-		return event;
+	public String getIdEvent() {
+		return idEvent;
 	}
-	public void setEvent(Event event) {
-		this.event = event;
+	public void setIdEvent(String idEvent) {
+		this.idEvent = idEvent;
 	}
+
 	
 }
