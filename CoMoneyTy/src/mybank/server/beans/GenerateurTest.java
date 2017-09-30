@@ -3,23 +3,20 @@ package mybank.server.beans;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.UUID;
 
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
+import mybank.server.beans.type.TypeOperation;
 import mybank.server.rest.util.Accesseur;
 
 public class GenerateurTest {
+	
 	public static void main(String[] args) throws Exception
 	{
 		String password = Base64.getEncoder().encodeToString(new String("CoMoneyTy").getBytes());
-		User user1 = new User("Bergère","Tony", "Tony", password, "tony.bergere@gmail.com","avatarTony.png");
-		User user2 = new User("Combey","Hervé", "Herve", password, "hcombey@gmail.com","avatarHerve.png");
-		User user3 = new User("Bergère","Fatia", "Fatia", password, "fatia.bergere@gmail.com","avatarFatia.png");
-		User user4 = new User("Combey","Sylvie", "Sylvie", password, "sylvie.combey@yahoo.fr","avatarSylvie.png");
-		User user5 = new User("Combey","Clément", "Clement", password, "clement.combey@gmail.com","avatarClement.png");
+		User user1 = new User("Bergère","Tony", "Tony", password, "tony.bergere@gmail.com","user/avatarTony.png");
+		User user2 = new User("Combey","Hervé", "Herve", password, "hcombey@gmail.com","user/avatarHerve.png");
+		User user3 = new User("Bergère","Fatia", "Fatia", password, "fatia.bergere@gmail.com","user/avatarFatia.png");
+		User user4 = new User("Combey","Sylvie", "Sylvie", password, "sylvie.combey@yahoo.fr","user/avatarSylvie.png");
+		User user5 = new User("Combey","Clément", "Clement", password, "clement.combey@gmail.com","user/avatarClement.png");
 		ArrayList<User> listeUser = new ArrayList<User>();
 		listeUser.add(user1);
 		listeUser.add(user2);
@@ -40,10 +37,10 @@ public class GenerateurTest {
 			}
 		}
 		
-		Event event1 = new Event("Anniversaire Tony", new Date("2017/01/06"), 100, "photoEvent1.png");
-		Event event2 = new Event("Soirée Karting", new Date("2017/03/21"), -50, "photoEvent2.png");
-		Event event3 = new Event("Sortie ski", new Date("2017/02/15"), 130, "photoEvent3.png");
-		Event event4 = new Event("Vacances de Pâques", new Date("2017/04/07"), -10, "photoEvent4.png");
+		Event event1 = new Event("Anniversaire Tony", new Date("2017/01/06"), 100, "event/photoEvent1.png");
+		Event event2 = new Event("Soirée Karting", new Date("2017/03/21"), -50, "event/photoEvent2.png");
+		Event event3 = new Event("Sortie ski", new Date("2017/02/15"), 130, "event/photoEvent3.png");
+		Event event4 = new Event("Vacances de Pâques", new Date("2017/04/07"), -10, "event/photoEvent4.png");
 		
 		ArrayList<Event> listeEvent = new ArrayList<Event>();
 		listeEvent.add(event1);
@@ -78,19 +75,26 @@ public class GenerateurTest {
 		participants4.add(user5);
 		event4.setParticipants(participants4 );
 		
-		ArrayList<Mouvement> listeMvt = new ArrayList<Mouvement>();
-		for(Event event : listeEvent)
+		ArrayList<Operation> listeOperation = new ArrayList<Operation>();
+		for(User usr : listeUser)
 		{
-			int nbMouvement = new Double(Math.random()*4).intValue()+1;
-			for(int i=0;i<nbMouvement;i++)
-			{
-				User emetteur = (User) donneHasard(listeUser);
-				User destinataire = (User) donneHasard(listeUser,emetteur.getId());
-				double montant = Math.random()*150;
-		//		if(Math.random()>0.5)
-		//			montant=-montant;
-		//		Mouvement mvt = new Mouvement(emetteur.getId(), destinataire.getId(), montant, emetteur.getPrenom()+" -> "+destinataire.getPrenom()+" : "+montant+" �", donneDate(), event);
-		//		listeMvt.add(mvt);
+			int nbMouvement = new Double(Math.random()*50).intValue();
+			
+			for(int i=0;i<nbMouvement;i++) {
+				Operation ope = new Operation(usr.id, donneDate(),"Operation "+new Double(Math.random()*10000).intValue() , new Double(Math.random()*1500).doubleValue()/10);
+				ope.ibanEmetteur="IBAN Emet";
+				ope.ibanDestinataire="IBAN Dest";
+				TypeOperation type = new TypeOperation(1, "Virement");
+				double test =Math.random();
+				if(test>0.8) {
+					type = new TypeOperation(2, "Prélèvement");
+				} else if(test>0.5) {
+					type = new TypeOperation(3, "Règlement CB");
+				}  else if(test>0.4) {
+					type = new TypeOperation(3, "Chèque");
+				} 
+				ope.setTypeOperation(type);
+				listeOperation.add(ope);
 			}
 		}
 		
@@ -122,10 +126,10 @@ public class GenerateurTest {
 			Accesseur.save(event);
 		}
 
-/*		for(Mouvement mvt : listeMvt)
+		for(Operation ope : listeOperation)
 		{
-			Accesseur.save(mvt);
-		} */
+			Accesseur.save(ope);
+		} 
 
 		for(LienEventUser lien : listeLien)
 		{

@@ -12,6 +12,9 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+
+import mybank.server.rest.util.json.DoubleSerializer;
 
 
 
@@ -55,6 +58,9 @@ public class Reponse {
 	}
 	public static Response getResponseOK(Object data) throws JsonProcessingException {
 		 ObjectMapper mapper = new ObjectMapper();
+		 SimpleModule module = new SimpleModule();
+		 module.addSerializer(double.class, new DoubleSerializer());
+		 mapper.registerModule(module);
 		 mapper.setDateFormat(Utilitaire.FORMAT_DATE_COURT);
 		 String json = mapper.writeValueAsString(data);
 		return Response.status(200).entity(json).build();

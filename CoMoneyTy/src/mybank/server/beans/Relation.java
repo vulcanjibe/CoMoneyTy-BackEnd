@@ -21,7 +21,7 @@ public class Relation implements ObjetId{
 		this.user2Id = user2Id;
 	}
 	public Relation() {
-		// TODO Auto-generated constructor stub
+		this.id = UUID.randomUUID().toString();
 	}
 
 	public String getNomClasse() {

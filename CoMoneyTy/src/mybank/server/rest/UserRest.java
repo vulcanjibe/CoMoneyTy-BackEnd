@@ -10,7 +10,6 @@ import java.util.UUID;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -25,8 +24,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import mybank.server.beans.Depense;
 import mybank.server.beans.Event;
 import mybank.server.beans.LienEventUser;
+import mybank.server.beans.Operation;
 import mybank.server.beans.Relation;
 import mybank.server.beans.User;
+import mybank.server.beans.javascript.OperationAvecDepense;
 import mybank.server.rest.util.Accesseur;
 import mybank.server.rest.util.ConnexionUser;
 import mybank.server.rest.util.Reponse;
@@ -202,6 +203,44 @@ public class UserRest {
         } catch (Exception e) {
             // Traitement de l'exception
             Utilitaire.exceptionRest(e, this.getClass(), "/{id}/events", "/"+idUser+"/events", connexionUser.getUser());
+            return Reponse.reponseKO(e);
+        }
+    }
+    
+    
+    @GET
+    @Path("/{id}/operations")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getOperationDeUserId(@Context HttpHeaders headers, @Context UriInfo uriInfo, @PathParam("id") String idUser) {
+        ConnexionUser connexionUser = null;
+        try {
+            // VÃ©rification de l'accÃ¨s depuis un user connectÃ©
+            connexionUser = ConnexionUser.verificationConnexionUser(headers);
+            
+            // On cherche les liens EventUset
+            List<Operation> liste = (List<Operation>) Accesseur.getListeFiltre(Operation.class, "userId='"+idUser+"'");
+            List<OperationAvecDepense> listeOperation = new ArrayList<>();
+            List<Depense> listeDep = (List<Depense>) Accesseur.getListeFiltre(Depense.class, "idPayeur='"+idUser+"'  and idOperation is not null");
+            for(Operation operation : liste) {
+            	// Je regarde si elle est liée à une dépense
+            	Depense depTrouve=null;
+            	for(Depense dep : listeDep)
+            	{
+            		if(dep.getIdOperation()!=null && dep.getIdOperation().equals(operation.getId())) {
+	    				depTrouve=dep;
+	    				break;
+            		}
+            	}
+            	OperationAvecDepense opeAvecDep = new OperationAvecDepense(operation,depTrouve);
+            	
+            		
+            	listeOperation.add(opeAvecDep);
+            }
+            // Traitement de la log
+            return Reponse.getResponseOK(listeOperation);
+        } catch (Exception e) {
+            // Traitement de l'exception
+            Utilitaire.exceptionRest(e, this.getClass(), "/{id}/operations", "/"+idUser+"/operations", connexionUser.getUser());
             return Reponse.reponseKO(e);
         }
     }
