@@ -79,7 +79,8 @@ public class GenerateurTest {
 		for(User usr : listeUser)
 		{
 			int nbMouvement = new Double(Math.random()*50).intValue();
-			
+			while(nbMouvement<20)
+				nbMouvement = new Double(Math.random()*50).intValue();
 			for(int i=0;i<nbMouvement;i++) {
 				Operation ope = new Operation(usr.id, donneDate(),"Operation "+new Double(Math.random()*10000).intValue() , new Double(Math.random()*1500).doubleValue()/10);
 				ope.ibanEmetteur="IBAN Emet";
@@ -88,10 +89,13 @@ public class GenerateurTest {
 				double test =Math.random();
 				if(test>0.8) {
 					type = new TypeOperation(2, "Prélèvement");
+					ope.setMontant(-ope.getMontant());
 				} else if(test>0.5) {
 					type = new TypeOperation(3, "Règlement CB");
+					ope.setMontant(-ope.getMontant());
 				}  else if(test>0.4) {
 					type = new TypeOperation(3, "Chèque");
+					ope.setMontant(-ope.getMontant());
 				} 
 				ope.setTypeOperation(type);
 				listeOperation.add(ope);

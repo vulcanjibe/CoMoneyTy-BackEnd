@@ -123,6 +123,7 @@ public class DepenseRest {
     @Produces(MediaType.APPLICATION_JSON)
     public Response save(@Context HttpHeaders headers, @Context UriInfo uriInfo, byte[] data) {
         ObjectMapper mapper = new ObjectMapper();
+        mapper.setDateFormat(Utilitaire.FORMAT_DATE_COURT);
         ConnexionUser connexionUser = null;
         try {
             // Vérification de l'accès depuis un depense connecté
@@ -165,22 +166,23 @@ public class DepenseRest {
 
     
     @DELETE
-    @Path("/delete")
+    @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response delete(@Context HttpHeaders headers, @Context UriInfo uriInfo, byte[] data) {
+    public Response delete(@Context HttpHeaders headers, @Context UriInfo uriInfo,  @PathParam("id") String strid) {
         ObjectMapper mapper = new ObjectMapper();
         ConnexionUser connexionUser = null;
         try {
             // Vérification de l'accès depuis un depense connecté
             connexionUser = ConnexionUser.verificationConnexionUser(headers);
-            User aDepense= mapper.readValue(new String(data, "UTF-8"), User.class);
+            Depense aDepense = new Depense();
+            aDepense.setId(strid);
             Accesseur.delete(aDepense);
             // Traitement de la log
-            Utilitaire.loggingRest(this.getClass(), "save", data, connexionUser.getUser());
+            Utilitaire.loggingRest(this.getClass(), "delete", "depense/"+strid, connexionUser.getUser());
             return Reponse.getResponseOK(aDepense);
         } catch (Exception e) {
             // Traitement de l'exception
-            Utilitaire.exceptionRest(e, this.getClass(), "save", data, connexionUser.getUser());
+            Utilitaire.exceptionRest(e, this.getClass(), "delete","depense/"+strid, connexionUser.getUser());
             return Reponse.reponseKO(e);
         }
     }
