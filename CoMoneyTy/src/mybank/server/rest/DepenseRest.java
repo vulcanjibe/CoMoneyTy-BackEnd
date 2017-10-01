@@ -3,6 +3,7 @@ package mybank.server.rest;
 import java.io.File;
 import java.io.InputStream;
 import java.nio.file.StandardCopyOption;
+import java.sql.Date;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,6 +24,7 @@ import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 
 import mybank.server.beans.LienEventUser;
 import mybank.server.beans.Depense;
@@ -31,6 +33,7 @@ import mybank.server.rest.util.Accesseur;
 import mybank.server.rest.util.ConnexionUser;
 import mybank.server.rest.util.Reponse;
 import mybank.server.rest.util.Utilitaire;
+import mybank.server.rest.util.json.DateDeserializer;
 @Path("/depense")
 public class DepenseRest {
 
@@ -123,7 +126,11 @@ public class DepenseRest {
     @Produces(MediaType.APPLICATION_JSON)
     public Response save(@Context HttpHeaders headers, @Context UriInfo uriInfo, byte[] data) {
         ObjectMapper mapper = new ObjectMapper();
-        mapper.setDateFormat(Utilitaire.FORMAT_DATE_COURT);
+        SimpleModule module = new SimpleModule();
+        module.addDeserializer(java.util.Date.class, new DateDeserializer());
+        mapper.registerModule(module);
+   //     mapper.setDateFormat(Utilitaire.FORMAT_DATE_COURT);
+        
         ConnexionUser connexionUser = null;
         try {
             // Vérification de l'accès depuis un depense connecté

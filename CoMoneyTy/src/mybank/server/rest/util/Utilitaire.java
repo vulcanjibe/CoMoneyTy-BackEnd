@@ -13,6 +13,7 @@ public class Utilitaire {
 	//public static final SimpleDateFormat FORMAT_DATE = new SimpleDateFormat("dd/MM/yyyy");
 	public static final SimpleDateFormat FORMAT_DATE = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.S'Z'");
 	public static final SimpleDateFormat FORMAT_DATE_COURT = new SimpleDateFormat("dd/MM/yy");
+	public static final SimpleDateFormat FORMAT_DATE_STANDARD = new SimpleDateFormat("dd/MM/yyyy");
 	public static final SimpleDateFormat FORMAT_HEURE_COURT = new SimpleDateFormat("HH:mm");	
 	public static final SimpleDateFormat FORMAT_TIMESTAMP_FICHIER = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss");	
 	public static final SimpleDateFormat FORMAT_JOUR_FICHIER = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss");	
