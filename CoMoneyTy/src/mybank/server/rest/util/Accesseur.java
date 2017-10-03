@@ -1,13 +1,11 @@
 package mybank.server.rest.util;
 
-import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
-import mybank.server.beans.ObjetId;
-
+import com.couchbase.client.core.message.observe.Observe.PersistTo;
 import com.couchbase.client.java.Bucket;
 import com.couchbase.client.java.Cluster;
 import com.couchbase.client.java.CouchbaseCluster;
@@ -19,13 +17,15 @@ import com.couchbase.client.java.query.N1qlQueryRow;
 import com.couchbase.client.java.repository.Repository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import mybank.server.beans.ObjetId;
+
 public class Accesseur {
 	
 	
 	static Repository REPOSITORY = null;
-	static Bucket BUCKET = null;
+	public static Bucket BUCKET = null;
 	static HashMap<String,Integer> HASHID = new HashMap<>();
-	final static String BUCKET_NAME = "beer-sample";
+	public final static String BUCKET_NAME = "beer-sample";
 	
 	public static void init() {
 		Cluster cluster = CouchbaseCluster.create("couchbase.home");
@@ -47,7 +47,7 @@ public class Accesseur {
 	}
 */
 	
-	public static void save(ObjetId obj) throws Exception
+	public static RawJsonDocument save(ObjetId obj) throws Exception
 	{
 		if(obj.getId()==null) {
 			String docId = UUID.randomUUID().toString();
@@ -55,10 +55,22 @@ public class Accesseur {
 		}
 		ObjectMapper mapper = new ObjectMapper();
 		String json = mapper.writeValueAsString(obj);
-		BUCKET.insert(RawJsonDocument.create(obj.getNomClasse()+"::"+obj.getId(), json));
+		RawJsonDocument res = BUCKET.insert(RawJsonDocument.create(obj.getNomClasse()+"::"+obj.getId(), json),com.couchbase.client.java.PersistTo.MASTER);
+		return res;
 		
 	}
-	
+	public static RawJsonDocument create(ObjetId obj) throws Exception
+	{
+		if(obj.getId()==null) {
+			String docId = UUID.randomUUID().toString();
+			obj.setId(docId);
+		}
+		ObjectMapper mapper = new ObjectMapper();
+		String json = mapper.writeValueAsString(obj);
+		RawJsonDocument res = RawJsonDocument.create(obj.getNomClasse()+"::"+obj.getId(), json);
+		return res;
+		
+	}
 	public static  void update(ObjetId obj) throws Exception
 	{
 		ObjectMapper mapper = new ObjectMapper();
@@ -131,10 +143,16 @@ public class Accesseur {
 
 	public static  void deleteWhere(ObjetId obj,String request) throws Exception
 	{
-		N1qlQuery query = N1qlQuery.simple("delete from `"+BUCKET_NAME+"` where nomClasse='"+obj.getNomClasse()+"' and "+request);
+		N1qlQuery query = N1qlQuery.simple("delete from `"+BUCKET_NAME+"` where nomClasse='"+obj.getId()+"' and "+request);
 		N1qlQueryResult result = BUCKET.query(query);
 		if(result.info().mutationCount()!=1)
-			throw new Exception("Souci dans le delete de "+obj);
+			throw new Exception("Souci dans le delete de "+obj.getId());
 		
+	}
+	public static  void deleteAll(Class aClass) throws Exception
+	{
+		N1qlQuery query = N1qlQuery.simple("delete from `"+BUCKET_NAME+"` where nomClasse='"+aClass.getSimpleName()+"'");
+		N1qlQueryResult result = BUCKET.query(query);
+	
 	}
 }
