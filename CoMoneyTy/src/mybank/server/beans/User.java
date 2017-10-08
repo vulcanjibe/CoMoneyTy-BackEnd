@@ -10,6 +10,7 @@ public class User  implements ObjetId {
 	String password;
 	String email;
 	String urlAvatar;
+	String phone;
 	String nomClasse="User";
 	public String getNom() {
 		return nom;
@@ -73,6 +74,12 @@ public class User  implements ObjetId {
 	}
 	public void setNomClasse(String nomClasse) {
 		this.nomClasse = nomClasse;
+	}
+	public String getPhone() {
+		return phone;
+	}
+	public void setPhone(String phone) {
+		this.phone = phone;
 	}
 
 

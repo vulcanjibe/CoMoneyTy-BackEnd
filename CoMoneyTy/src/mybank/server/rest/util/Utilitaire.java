@@ -28,6 +28,7 @@ public class Utilitaire {
         // Traitement des exceptions REST
         public static void exceptionRest(Exception e,Class entite,String method, byte[] data,User user)
         {
+        	e.printStackTrace();
             try {
                 String str = new String(data, "UTF-8");
                 String nom="Server";

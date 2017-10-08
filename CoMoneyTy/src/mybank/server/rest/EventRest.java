@@ -194,7 +194,7 @@ public class EventRest {
     @GET
     @Path("/{id}/users")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getEventDeUserId(@Context HttpHeaders headers, @Context UriInfo uriInfo, @PathParam("id") String idEvent) {
+    public Response getUsersDeEventId(@Context HttpHeaders headers, @Context UriInfo uriInfo, @PathParam("id") String idEvent) {
         ConnexionUser connexionUser = null;
         try {
             // Vérification de l'accès depuis un user connecté
@@ -225,7 +225,7 @@ public class EventRest {
             		if(depense.getIdPayeur().equals(user.getId()))
             			montantPaye+=depense.getMontant();
             	}
-            	montantDu=(montantEvent-montantPaye)/listeUser.size();
+            	montantDu=montantEvent/listeUser.size()-montantPaye;
             	UserAvecDepense userAvecDepense = new UserAvecDepense(user);
             	userAvecDepense.setaPaye(montantPaye);
             	userAvecDepense.setDoit(montantDu);
@@ -237,6 +237,26 @@ public class EventRest {
         } catch (Exception e) {
             // Traitement de l'exception
             Utilitaire.exceptionRest(e, this.getClass(), "/{id}/users", "/"+idEvent+"/users", connexionUser.getUser());
+            return Reponse.reponseKO(e);
+        }
+    }
+    
+    @GET
+    @Path("/{id}/depenses")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getDepensesDeEventId(@Context HttpHeaders headers, @Context UriInfo uriInfo, @PathParam("id") String idEvent) {
+        ConnexionUser connexionUser = null;
+        try {
+            // Vérification de l'accès depuis un user connecté
+            connexionUser = ConnexionUser.verificationConnexionUser(headers);
+            
+            // On cherche les liens EventUset
+            List<Depense> liste = (List<Depense>) Accesseur.getListeFiltre(Depense.class, "idEvent='"+idEvent+"'");
+            // Traitement de la log
+            return Reponse.getResponseOK(liste);
+        } catch (Exception e) {
+            // Traitement de l'exception
+            Utilitaire.exceptionRest(e, this.getClass(), "/{id}/depenses", "/"+idEvent+"/depenses", connexionUser.getUser());
             return Reponse.reponseKO(e);
         }
     }

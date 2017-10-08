@@ -28,8 +28,8 @@ public class TestSynchro {
 				liste.add(new ObjetTest("Objet " + i));
 			}
 			for (ObjetTest obj : liste) {
-				listeDoc.add(Accesseur.save(obj));
-				listeDoc.add(Accesseur.create(obj));
+				//listeDoc.add(Accesseur.save(obj));
+				//listeDoc.add(Accesseur.create(obj));
 			}
 			
 			ArrayList<ObjetTest> liste2 = Accesseur.getListe(ObjetTest.class);

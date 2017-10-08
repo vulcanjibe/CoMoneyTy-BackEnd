@@ -10,7 +10,8 @@ public class Event implements ObjetId {
 	String id;
 	String libelle;
 	Date date;
-	double montant;
+	double montantTotal;
+	double montantDu;
 	String urlPhoto;
 	@JsonIgnore
 	ArrayList<User> participants=null;
@@ -33,11 +34,17 @@ public class Event implements ObjetId {
 	public void setDate(Date date) {
 		this.date = date;
 	}
-	public double getMontant() {
-		return montant;
+	public double getMontantTotal() {
+		return montantTotal;
 	}
-	public void setMontant(double montant) {
-		this.montant = montant;
+	public void setMontantTotal(double montantTotal) {
+		this.montantTotal = montantTotal;
+	}
+	public double getMontantDu() {
+		return montantDu;
+	}
+	public void setMontantDu(double montantDu) {
+		this.montantDu = montantDu;
 	}
 	public ArrayList<User> getParticipants() throws Exception {
 		
@@ -55,12 +62,11 @@ public class Event implements ObjetId {
 		super();
 		this.id = UUID.randomUUID().toString();
 	}
-	public Event(String libelle, Date date, double montant,String photo) {
+	public Event(String libelle, Date date, String photo) {
 		super();
 		this.id = UUID.randomUUID().toString();
 		this.libelle = libelle;
 		this.date = date;
-		this.montant = montant;
 		this.urlPhoto = photo;
 	}
 	public String getUrlPhoto() {

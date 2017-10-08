@@ -3,6 +3,11 @@ package mybank.server.beans;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Date;
+import java.util.List;
+
+import com.couchbase.client.java.query.N1qlQuery;
+import com.couchbase.client.java.query.N1qlQueryResult;
+import com.couchbase.client.java.query.N1qlQueryRow;
 
 import mybank.server.beans.type.TypeOperation;
 import mybank.server.rest.util.Accesseur;
@@ -11,6 +16,8 @@ public class GenerateurTest {
 	
 	public static void main(String[] args) throws Exception
 	{
+		
+		
 		String password = Base64.getEncoder().encodeToString(new String("CoMoneyTy").getBytes());
 		User user1 = new User("Bergère","Tony", "Tony", password, "tony.bergere@gmail.com","user/avatarTony.png");
 		User user2 = new User("Combey","Hervé", "Herve", password, "hcombey@gmail.com","user/avatarHerve.png");
@@ -37,10 +44,10 @@ public class GenerateurTest {
 			}
 		}
 		
-		Event event1 = new Event("Anniversaire Tony", new Date("2017/01/06"), 100, "event/photoEvent1.png");
-		Event event2 = new Event("Soirée Karting", new Date("2017/03/21"), -50, "event/photoEvent2.png");
-		Event event3 = new Event("Sortie ski", new Date("2017/02/15"), 130, "event/photoEvent3.png");
-		Event event4 = new Event("Vacances de Pâques", new Date("2017/04/07"), -10, "event/photoEvent4.png");
+		Event event1 = new Event("Anniversaire Tony", new Date("2017/01/06"), "event/photoEvent1.png");
+		Event event2 = new Event("Soirée Karting", new Date("2017/03/21"),  "event/photoEvent2.png");
+		Event event3 = new Event("Sortie ski", new Date("2017/02/15"),  "event/photoEvent3.png");
+		Event event4 = new Event("Vacances de Pâques", new Date("2017/04/07"),  "event/photoEvent4.png");
 		
 		ArrayList<Event> listeEvent = new ArrayList<Event>();
 		listeEvent.add(event1);
@@ -114,30 +121,57 @@ public class GenerateurTest {
 	//	System.out.println(mapper.writeValueAsString(event1));
 		
 		Accesseur.init();
-		
+		Accesseur.deleteAll();
+
+		System.out.println("START");
+		int nb = 0;
 		for(User user : listeUser)
 		{
 			Accesseur.save(user);
+			nb++;
 		}
 		
 		for(Relation relation : relations)
 		{
 			Accesseur.save(relation);
+			nb++;
 		}
 
 		for(Event event : listeEvent)
 		{
 			Accesseur.save(event);
+			nb++;
 		}
 
 		for(Operation ope : listeOperation)
 		{
 			Accesseur.save(ope);
+			nb++;
 		} 
 
 		for(LienEventUser lien : listeLien)
 		{
 			Accesseur.save(lien);
+			nb++;
+		}
+		System.out.println("STOP");
+		
+		boolean ok = false;
+		while(!ok)
+		{
+			Thread.sleep(1000);
+			String requete = "select * from `"+Accesseur.BUCKET_NAME+"`";
+			
+			
+			N1qlQuery query = N1qlQuery.simple(requete);
+			N1qlQueryResult result = Accesseur.BUCKET.query(query);
+			List<N1qlQueryRow> list = result.allRows();
+			
+			System.out.println(list.size()+" sur "+nb);
+			if(list.size()==nb)
+			{
+				ok = true;
+			}
 		}
 
 	}
