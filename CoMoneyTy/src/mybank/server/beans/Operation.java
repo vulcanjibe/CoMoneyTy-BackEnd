@@ -13,8 +13,10 @@ public class Operation implements ObjetId {
 	String description;
 	double montant;
 	String ibanEmetteur;
+	String urlPhotoEmetteur;
 	String ibanDestinataire;
 	TypeOperation typeOperation;
+	String urlPhotoDestinataire;
 	public String getId() {
 		return id;
 	}
@@ -81,6 +83,18 @@ public class Operation implements ObjetId {
 		this.date = date;
 		this.description = description;
 		this.montant = montant;
+	}
+	public String getUrlPhotoEmetteur() {
+		return urlPhotoEmetteur;
+	}
+	public void setUrlPhotoEmetteur(String urlPhotoEmetteur) {
+		this.urlPhotoEmetteur = urlPhotoEmetteur;
+	}
+	public String getUrlPhotoDestinataire() {
+		return urlPhotoDestinataire;
+	}
+	public void setUrlPhotoDestinataire(String urlPhotoDestinataire) {
+		this.urlPhotoDestinataire = urlPhotoDestinataire;
 	}
 	
 	

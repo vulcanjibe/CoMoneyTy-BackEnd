@@ -1,15 +1,10 @@
 package mybank.server.rest.util;
 
-import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
-
-import mybank.server.beans.ObjetId;
-import rx.Subscriber;
-import rx.functions.Action0;
-import rx.functions.Action1;
+import java.util.concurrent.TimeUnit;
 
 import com.couchbase.client.java.Bucket;
 import com.couchbase.client.java.Cluster;
@@ -17,11 +12,14 @@ import com.couchbase.client.java.CouchbaseCluster;
 import com.couchbase.client.java.PersistTo;
 import com.couchbase.client.java.document.RawJsonDocument;
 import com.couchbase.client.java.document.json.JsonObject;
+import com.couchbase.client.java.env.CouchbaseEnvironment;
+import com.couchbase.client.java.env.DefaultCouchbaseEnvironment;
 import com.couchbase.client.java.query.N1qlQuery;
 import com.couchbase.client.java.query.N1qlQueryResult;
 import com.couchbase.client.java.query.N1qlQueryRow;
-import com.couchbase.client.java.repository.Repository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import mybank.server.beans.ObjetId;
 
 public class Accesseur {
 	
@@ -69,8 +67,12 @@ public class Accesseur {
 	}
 	
 	public static void init() {
-		Cluster cluster = CouchbaseCluster.create("couchbase.home");
-		BUCKET = cluster.openBucket(BUCKET_NAME);
+		CouchbaseEnvironment env = DefaultCouchbaseEnvironment.builder()
+                .connectTimeout(30000) //10000ms = 10s, default is 5s
+                .build();
+
+		Cluster cluster = CouchbaseCluster.create(env,"couchbase.home");
+		BUCKET = cluster.openBucket(BUCKET_NAME,30,TimeUnit.SECONDS);
 		//REPOSITORY = BUCKET.repository();
 	}
 	

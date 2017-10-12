@@ -12,6 +12,7 @@ public class Event implements ObjetId {
 	Date date;
 	double montantTotal;
 	double montantDu;
+	double montantDepense;
 	String urlPhoto;
 	@JsonIgnore
 	ArrayList<User> participants=null;
@@ -80,6 +81,12 @@ public class Event implements ObjetId {
 	}
 	public void setNomClasse(String nomClasse) {
 		this.nomClasse = nomClasse;
+	}
+	public double getMontantDepense() {
+		return montantDepense;
+	}
+	public void setMontantDepense(double montantDepense) {
+		this.montantDepense = montantDepense;
 	}
 
 }

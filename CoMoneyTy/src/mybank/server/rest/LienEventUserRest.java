@@ -6,6 +6,7 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -17,7 +18,6 @@ import javax.ws.rs.core.UriInfo;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import mybank.server.beans.Event;
 import mybank.server.beans.LienEventUser;
 import mybank.server.rest.util.Accesseur;
 import mybank.server.rest.util.ConnexionUser;
@@ -112,8 +112,7 @@ public class LienEventUserRest {
         }
     }
 
-    @POST
-    @Path("/save")
+    @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response save(@Context HttpHeaders headers, @Context UriInfo uriInfo, byte[] data) {
@@ -123,6 +122,11 @@ public class LienEventUserRest {
             // Vérification de l'accès depuis un event connecté
             connexionUser = ConnexionUser.verificationConnexionUser(headers);
             LienEventUser aLienEventUSer= mapper.readValue(new String(data, "UTF-8"), LienEventUser.class);
+            
+            List<LienEventUser> list = Accesseur.getListeFiltre(LienEventUser.class, "userId='"+aLienEventUSer.getUserId()+"' and eventId='"+aLienEventUSer.getEventId()+"'");
+            if(!list.isEmpty())
+            	throw new Exception("Le user est d�j� affect�!!!");
+            
             Accesseur.save(aLienEventUSer);
             
        
@@ -158,23 +162,24 @@ public class LienEventUserRest {
     }
 
     
-    @POST
-    @Path("/delete")
+    @DELETE
+    @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response delete(@Context HttpHeaders headers, @Context UriInfo uriInfo, byte[] data) {
+    public Response delete(@Context HttpHeaders headers, @Context UriInfo uriInfo,  @PathParam("id") String strid) {
         ObjectMapper mapper = new ObjectMapper();
         ConnexionUser connexionUser = null;
         try {
             // Vérification de l'accès depuis un lienEventUser connecté
             connexionUser = ConnexionUser.verificationConnexionUser(headers);
-            LienEventUser aLienEventUser = mapper.readValue(new String(data, "UTF-8"), LienEventUser.class);
+            LienEventUser aLienEventUser = new LienEventUser();
+            aLienEventUser.setId(strid);
             Accesseur.delete(aLienEventUser);
             // Traitement de la log
-            Utilitaire.loggingRest(this.getClass(), "save", data, connexionUser.getUser());
+            Utilitaire.loggingRest(this.getClass(), "delete", strid, connexionUser.getUser());
             return Reponse.getResponseOK(aLienEventUser);
         } catch (Exception e) {
             // Traitement de l'exception
-            Utilitaire.exceptionRest(e, this.getClass(), "save", data, connexionUser.getUser());
+            Utilitaire.exceptionRest(e, this.getClass(), "save", strid, connexionUser.getUser());
             return Reponse.reponseKO(e);
         }
     }

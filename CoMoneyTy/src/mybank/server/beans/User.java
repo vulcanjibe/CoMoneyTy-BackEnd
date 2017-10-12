@@ -12,6 +12,7 @@ public class User  implements ObjetId {
 	String urlAvatar;
 	String phone;
 	String nomClasse="User";
+	String iban;
 	public String getNom() {
 		return nom;
 	}
@@ -59,6 +60,18 @@ public class User  implements ObjetId {
 		this.email = email;
 		this.urlAvatar = avatar;
 	}
+	public User(String nom, String prenom, String username,
+			String password, String email,String avatar,String phone) {
+		super();
+		this.id = UUID.randomUUID().toString();
+		this.nom = nom;
+		this.prenom = prenom;
+		this.login = username;
+		this.password = password;
+		this.email = email;
+		this.urlAvatar = avatar;
+		this.phone = phone;
+	}
 	public User() {
 		// TODO Auto-generated constructor stub
 		this.id = UUID.randomUUID().toString();
@@ -80,6 +93,12 @@ public class User  implements ObjetId {
 	}
 	public void setPhone(String phone) {
 		this.phone = phone;
+	}
+	public String getIban() {
+		return iban;
+	}
+	public void setIban(String iban) {
+		this.iban = iban;
 	}
 
 

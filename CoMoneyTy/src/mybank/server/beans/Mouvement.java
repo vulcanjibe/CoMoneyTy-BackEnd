@@ -73,6 +73,10 @@ public class Mouvement implements ObjetId {
 	public void setIdEvent(String idEvent) {
 		this.idEvent = idEvent;
 	}
+	@Override
+	public String toString() {
+		return "Mouvement : "+ idEmetteur + "->"+idDestinataire+"=" + montant	+ "]";
+	}
 
 	
 }

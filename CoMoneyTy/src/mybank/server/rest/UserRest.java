@@ -1,10 +1,12 @@
 package mybank.server.rest;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.TreeSet;
 import java.util.UUID;
 
 import javax.ws.rs.DELETE;
@@ -32,6 +34,7 @@ import mybank.server.beans.Operation;
 import mybank.server.beans.Relation;
 import mybank.server.beans.User;
 import mybank.server.beans.javascript.OperationAvecDepense;
+import mybank.server.beans.javascript.TableauOperation;
 import mybank.server.rest.util.Accesseur;
 import mybank.server.rest.util.ConnexionUser;
 import mybank.server.rest.util.Reponse;
@@ -41,6 +44,7 @@ import mybank.server.rest.util.Utilitaire;
 public class UserRest {
 
 	static String ENTITY = "user";
+	public static SimpleDateFormat SDF_MOIS = new SimpleDateFormat("MMM yy");
 
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
@@ -168,12 +172,14 @@ public class UserRest {
 			// VÃ©rification de l'accÃ¨s depuis un user connectÃ©
 			connexionUser = ConnexionUser.verificationConnexionUser(headers);
 			User aUser = mapper.readValue(new String(data, "UTF-8"), User.class);
+			String passEnClair = aUser.getPassword();
 			String passwordEncode = Base64.getEncoder().encodeToString(aUser.getPassword().getBytes());
 			aUser.setPassword(passwordEncode);
 			Accesseur.update(aUser);
 
 			// Traitement de la log
 			Utilitaire.loggingRest(this.getClass(), "save", data, connexionUser.getUser());
+			aUser.setPassword(passEnClair);
 			return Reponse.getResponseOK(aUser);
 		} catch (Exception e) {
 			// Traitement de l'exception
@@ -240,6 +246,7 @@ public class UserRest {
 						"eventId='" + event.getId() + "'");
 				double montantDu = (montantEvent / listeUser.size()) - montantPaye;
 				event.setMontantDu(montantDu);
+				event.setMontantDepense(montantPaye);
 			}
 
 			// Traitement de la log
@@ -268,6 +275,18 @@ public class UserRest {
 			List<OperationAvecDepense> listeOperation = new ArrayList<>();
 			List<Depense> listeDep = (List<Depense>) Accesseur.getListeFiltre(Depense.class,
 					"idPayeur='" + idUser + "'  and idOperation is not null");
+			
+			// Recherce des emtteurs/destinataire connu
+			List<User> listeUser = (List<User>) Accesseur.getListe(User.class);
+			for (Operation operation : liste) {
+				
+				for(User user : listeUser) {
+					if(user.getIban().equals(operation.getIbanEmetteur()))
+						operation.setUrlPhotoEmetteur(user.getUrlAvatar());
+					if(user.getIban().equals(operation.getIbanDestinataire()))
+						operation.setUrlPhotoDestinataire(user.getUrlAvatar());
+				}
+			}
 			for (Operation operation : liste) {
 				// Je regarde si elle est liée à une dépense
 				Depense depTrouve = null;
@@ -281,8 +300,27 @@ public class UserRest {
 
 				listeOperation.add(opeAvecDep);
 			}
+
+			// HashMap avec les dates
+			TreeSet<TableauOperation> tree = new TreeSet<TableauOperation>();
+			for (OperationAvecDepense operationAvecDepense : listeOperation) {
+				Date d = operationAvecDepense.getOperation().getDate();
+				Date dateReference = new Date();
+				Date dateReference1semaine = new Date();
+				dateReference1semaine.setTime(dateReference.getTime() - 7 * 24 * 3600 * 1000);
+	
+				String mois = "Cette semaine";
+				if (d.before(dateReference1semaine))
+					mois = SDF_MOIS.format(d);
+				TableauOperation tab = new TableauOperation(mois);
+				if (!tree.contains(tab))
+					tree.add(tab);
+				tab = tree.floor(tab);
+				tab.getTableau().add(operationAvecDepense);
+
+			}
 			// Traitement de la log
-			return Reponse.getResponseOK(listeOperation);
+			return Reponse.getResponseOK(tree);
 		} catch (Exception e) {
 			// Traitement de l'exception
 			Utilitaire.exceptionRest(e, this.getClass(), "/{id}/operations", "/" + idUser + "/operations",
@@ -364,8 +402,10 @@ public class UserRest {
 			for (Invitation invitation : listeInvitation) {
 				if (invitation.getEtatReponse().startsWith("Invitation envoyée")) {
 					Contact aContact = invitation.getContact();
-					if ((aContact.getEmail()!=null && aContact.getEmail().equalsIgnoreCase(theUser.getEmail())) || (aContact.getPhoneNumber()!=null && theUser.getPhone()!=null && aContact.getPhoneNumber()
-							.replaceAll(" ", "").equalsIgnoreCase(theUser.getPhone().replaceAll(" ", "")))) {
+					if ((aContact.getEmail() != null && aContact.getEmail().equalsIgnoreCase(theUser.getEmail()))
+							|| (aContact.getPhoneNumber() != null && theUser.getPhone() != null
+									&& aContact.getPhoneNumber().replaceAll(" ", "")
+											.equalsIgnoreCase(theUser.getPhone().replaceAll(" ", "")))) {
 						// Recup de l'emetteur complet
 						User userEmetteur = (User) Accesseur.get(User.class, invitation.getIdUser());
 						Message aMessage = new Message("Invitation de " + userEmetteur.getPrenom() + " en attente...",
