@@ -11,6 +11,8 @@ public class Mouvement implements ObjetId {
 	String commentaire;
 	Date date;
 	String idEvent;
+	String etat;
+	String nomClasse="Mouvement";
 	public String getId() {
 		return id;
 	}
@@ -65,7 +67,7 @@ public class Mouvement implements ObjetId {
 	}
 	public String getNomClasse() {
 		// TODO Auto-generated method stub
-		return this.getClass().getName();
+		return nomClasse;
 	}
 	public String getIdEvent() {
 		return idEvent;
@@ -73,9 +75,11 @@ public class Mouvement implements ObjetId {
 	public void setIdEvent(String idEvent) {
 		this.idEvent = idEvent;
 	}
-	@Override
-	public String toString() {
-		return "Mouvement : "+ idEmetteur + "->"+idDestinataire+"=" + montant	+ "]";
+	public String getEtat() {
+		return etat;
+	}
+	public void setEtat(String etat) {
+		this.etat = etat;
 	}
 
 	

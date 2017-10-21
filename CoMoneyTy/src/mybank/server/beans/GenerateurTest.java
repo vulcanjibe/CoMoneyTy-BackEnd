@@ -33,14 +33,23 @@ public class GenerateurTest {
 
 	
 
-	public static void main(String[] args) throws Exception
+	public static void main(String[] args) 
 
 	{
+		Accesseur.init();
+		try {
+			initialisation();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
 
+	public static void initialisation() throws Exception {
 		String password = Base64.getEncoder().encodeToString(new String("CoMoneyTy").getBytes());
 
-		User user1 = new User("Bergère","Tony", "Tony", password, "tony.bergere@gmail.com","user/avatarTony.png");
-		User user2 = new User("Combey","Hervé", "Herve", password, "hcombey@gmail.com","user/avatarHerve.png");
+		User user1 = new User("Bergère","Tony", "Tony", password, "tony.bergere@gmail.com","user/avatarTony.png","0642663846");
+		User user2 = new User("Combey","Hervé", "Herve", password, "hcombey@gmail.com","user/avatarHerve.png","0682667921");
 		User user3 = new User("Bergère","Fatia", "Fatia", password, "fatia.bergere@gmail.com","user/avatarFatia.png");
 		User user4 = new User("Combey","Sylvie", "Sylvie", password, "sylvie.combey@yahoo.fr","user/avatarSylvie.png");
 		User user5 = new User("Combey","Clément", "Clement", password, "clement.combey@gmail.com","user/avatarClement.png");
@@ -196,7 +205,7 @@ public class GenerateurTest {
 
 		
 
-		Accesseur.init();
+		
 		Accesseur.deleteAll();
 
 
@@ -286,10 +295,6 @@ public class GenerateurTest {
 			}
 
 		}
-
-
-
-
 	}
 
 	public static Date donneDate()

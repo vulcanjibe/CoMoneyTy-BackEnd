@@ -9,8 +9,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 public class Message implements ObjetId {
 	String id;
 	String message;
+	String titre;
 	String messageCache;
 	User emetteur;
+	User destinataire;
 	Date date;
 	String nomClasse="Message";
 	boolean dejaLu;
@@ -55,11 +57,12 @@ public class Message implements ObjetId {
 		this.id = UUID.randomUUID().toString();
 	}
 
-	public Message(String message, User emetteur) {
+	public Message(String titre,String message, User emetteur) {
 		super();
 		this.id = UUID.randomUUID().toString();
 		this.message = message;
 		this.emetteur = emetteur;
+		this.titre = titre;
 		this.date=new Date();
 		this.dejaLu=false;
 	}
@@ -68,5 +71,17 @@ public class Message implements ObjetId {
 	}
 	public void setMessageCache(String messageCache) {
 		this.messageCache = messageCache;
+	}
+	public User getDestinataire() {
+		return destinataire;
+	}
+	public void setDestinataire(User destinataire) {
+		this.destinataire = destinataire;
+	}
+	public String getTitre() {
+		return titre;
+	}
+	public void setTitre(String titre) {
+		this.titre = titre;
 	}	
 }

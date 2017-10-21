@@ -23,20 +23,21 @@ public class TestSynchro {
 			Accesseur.init();
 			Accesseur.deleteAll(ObjetTest.class);
 			ArrayList<ObjetTest> liste = new ArrayList<>();
-			ArrayList<RawJsonDocument> listeDoc = new ArrayList<>();
+			ArrayList<ObjetTest> liste21 = Accesseur.getListe(ObjetTest.class);
 			for (int i = 0; i < 10; i++) {
 				liste.add(new ObjetTest("Objet " + i));
 			}
 			for (ObjetTest obj : liste) {
-				//listeDoc.add(Accesseur.save(obj));
-				//listeDoc.add(Accesseur.create(obj));
+				Accesseur.save(obj);
 			}
 			
 			ArrayList<ObjetTest> liste2 = Accesseur.getListe(ObjetTest.class);
-			
-		
-			System.out.println(liste.size()+" -> "+liste2.size());
+			System.out.println(liste21.size()+"->" +liste.size()+" -> "+liste2.size());
+			Thread.sleep(500);
+			liste2 = Accesseur.getListe(ObjetTest.class);
+			System.out.println(liste21.size()+"->" +liste.size()+" -> "+liste2.size());
 
+			Thread.sleep(60000);
 			
 		} catch (Exception e) {
 			// TODO Auto-generated catch block

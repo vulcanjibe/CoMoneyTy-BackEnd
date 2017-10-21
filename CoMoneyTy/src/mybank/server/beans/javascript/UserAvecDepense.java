@@ -33,9 +33,5 @@ public class UserAvecDepense {
 		aPaye+=montant;
 		doit-=montant;
 	}
-	@Override
-	public String toString() {
-		return "UserAvecDepense [user=" + user.getPrenom() + ", aPaye=" + aPaye + ", doit=" + doit + "]";
-	}
 	
 }

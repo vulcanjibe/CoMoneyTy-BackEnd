@@ -30,10 +30,12 @@ import mybank.server.beans.Event;
 import mybank.server.beans.Invitation;
 import mybank.server.beans.LienEventUser;
 import mybank.server.beans.Message;
+import mybank.server.beans.Mouvement;
 import mybank.server.beans.Operation;
 import mybank.server.beans.Relation;
 import mybank.server.beans.User;
 import mybank.server.beans.javascript.OperationAvecDepense;
+import mybank.server.beans.javascript.Ordre;
 import mybank.server.beans.javascript.TableauOperation;
 import mybank.server.rest.util.Accesseur;
 import mybank.server.rest.util.ConnexionUser;
@@ -180,6 +182,8 @@ public class UserRest {
 			// Traitement de la log
 			Utilitaire.loggingRest(this.getClass(), "save", data, connexionUser.getUser());
 			aUser.setPassword(passEnClair);
+			// Attention il faut relogguer le User
+			connexionUser.setUser(aUser);
 			return Reponse.getResponseOK(aUser);
 		} catch (Exception e) {
 			// Traitement de l'exception
@@ -281,6 +285,8 @@ public class UserRest {
 			for (Operation operation : liste) {
 				
 				for(User user : listeUser) {
+					if(user.getIban()==null)
+						continue;
 					if(user.getIban().equals(operation.getIbanEmetteur()))
 						operation.setUrlPhotoEmetteur(user.getUrlAvatar());
 					if(user.getIban().equals(operation.getIbanDestinataire()))
@@ -393,7 +399,7 @@ public class UserRest {
 			User theUser = connexionUser.getUser();
 			// On cherche les liens EventUset
 			List<Message> listeMessage = (List<Message>) Accesseur.getListeFiltre(Message.class,
-					"idUser='" + idUser + "'");
+					"destinataire.id='" + idUser + "'");
 
 			// Je recherche aussi les invitations
 			List<Invitation> listeInvitation = (List<Invitation>) Accesseur.getListeFiltre(Invitation.class,
@@ -408,7 +414,7 @@ public class UserRest {
 											.equalsIgnoreCase(theUser.getPhone().replaceAll(" ", "")))) {
 						// Recup de l'emetteur complet
 						User userEmetteur = (User) Accesseur.get(User.class, invitation.getIdUser());
-						Message aMessage = new Message("Invitation de " + userEmetteur.getPrenom() + " en attente...",
+						Message aMessage = new Message("Invitation de " + userEmetteur.getPrenom() + " en attente...","Invitation de " + userEmetteur.getPrenom() + " en attente...",
 								userEmetteur);
 						aMessage.setMessageCache("idInvitation=" + invitation.getId());
 						listeMessage.add(aMessage);
@@ -426,6 +432,37 @@ public class UserRest {
 		}
 	}
 
+	@GET
+	@Path("/ordres")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getOrdresDeUserId(@Context HttpHeaders headers, @Context UriInfo uriInfo) {
+		ConnexionUser connexionUser = null;
+		try {
+			// Vérification de l'accès depuis un user connecté
+			connexionUser = ConnexionUser.verificationConnexionUser(headers);
+			User theUser = connexionUser.getUser();
+			// On cherche les mouvement en attente
+			List<Mouvement> listeMouvement = (List<Mouvement>) Accesseur.getListeFiltre(Mouvement.class,
+					"idEmetteur='" + theUser.getId() + "' and etat='Transmis'");
+
+			List<Ordre> liste = new ArrayList<Ordre>();
+			for(Mouvement mouvement : listeMouvement) {
+				Event event = (Event)Accesseur.get(Event.class, mouvement.getIdEvent());
+				User user = (User)Accesseur.get(User.class,mouvement.getIdDestinataire());
+				Ordre ordre = new Ordre(mouvement,user,event);
+				liste.add(ordre);
+			}
+			// Traitement de la log
+			return Reponse.getResponseOK(liste);
+		} catch (Exception e) {
+			// Traitement de l'exception
+			Utilitaire.exceptionRest(e, this.getClass(), "/ordres", connexionUser.getUser().getId(),
+					connexionUser.getUser());
+			return Reponse.reponseKO(e);
+		}
+	}
+
+	
 	@POST
 	@Path("/login")
 	@Produces(MediaType.APPLICATION_JSON)

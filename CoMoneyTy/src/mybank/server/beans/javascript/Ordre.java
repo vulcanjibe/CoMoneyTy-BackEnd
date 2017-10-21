@@ -1,0 +1,39 @@
+package mybank.server.beans.javascript;
+
+import mybank.server.beans.Event;
+import mybank.server.beans.Mouvement;
+import mybank.server.beans.User;
+
+public class Ordre {
+	Mouvement mouvement;
+	User emetteur;
+	Event event;
+	public Mouvement getMouvement() {
+		return mouvement;
+	}
+	public void setMouvement(Mouvement mouvement) {
+		this.mouvement = mouvement;
+	}
+	public User getEmetteur() {
+		return emetteur;
+	}
+	public void setEmetteur(User emetteur) {
+		this.emetteur = emetteur;
+	}
+	public Event getEvent() {
+		return event;
+	}
+	public void setEvent(Event event) {
+		this.event = event;
+	}
+	public Ordre(Mouvement mouvement, User emetteur, Event event) {
+		super();
+		this.mouvement = mouvement;
+		this.emetteur = emetteur;
+		this.event = event;
+	}
+	public Ordre() {
+		super();
+	}
+	
+}
