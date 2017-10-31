@@ -13,6 +13,7 @@ import com.couchbase.client.java.query.N1qlQueryRow;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import mybank.server.rest.util.Accesseur;
+import mybank.server.rest.util.AccesseurGenerique;
 import rx.functions.Action1;
 
 public class TestSynchro {
@@ -20,21 +21,21 @@ public class TestSynchro {
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 		try {
-			Accesseur.init();
-			Accesseur.deleteAll(ObjetTest.class);
+			AccesseurGenerique.getInstance().init();
+			AccesseurGenerique.getInstance().deleteAll(ObjetTest.class);
 			ArrayList<ObjetTest> liste = new ArrayList<>();
-			ArrayList<ObjetTest> liste21 = Accesseur.getListe(ObjetTest.class);
+			ArrayList<ObjetTest> liste21 = AccesseurGenerique.getInstance().getListe(ObjetTest.class);
 			for (int i = 0; i < 10; i++) {
 				liste.add(new ObjetTest("Objet " + i));
 			}
 			for (ObjetTest obj : liste) {
-				Accesseur.save(obj);
+				AccesseurGenerique.getInstance().save(obj);
 			}
 			
-			ArrayList<ObjetTest> liste2 = Accesseur.getListe(ObjetTest.class);
+			ArrayList<ObjetTest> liste2 = AccesseurGenerique.getInstance().getListe(ObjetTest.class);
 			System.out.println(liste21.size()+"->" +liste.size()+" -> "+liste2.size());
 			Thread.sleep(500);
-			liste2 = Accesseur.getListe(ObjetTest.class);
+			liste2 = AccesseurGenerique.getInstance().getListe(ObjetTest.class);
 			System.out.println(liste21.size()+"->" +liste.size()+" -> "+liste2.size());
 
 			Thread.sleep(60000);

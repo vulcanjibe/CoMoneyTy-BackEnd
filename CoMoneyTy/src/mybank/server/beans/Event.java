@@ -15,6 +15,7 @@ public class Event implements ObjetId {
 	double montantDepense;
 	String urlPhoto;
 	String etat;
+	ArrayList<String> roles;
 	@JsonIgnore
 	ArrayList<User> participants=null;
 	String nomClasse="Event";
@@ -70,6 +71,7 @@ public class Event implements ObjetId {
 		this.libelle = libelle;
 		this.date = date;
 		this.urlPhoto = photo;
+		this.etat = "Ouvert";
 	}
 	public String getUrlPhoto() {
 		return urlPhoto;
@@ -94,6 +96,12 @@ public class Event implements ObjetId {
 	}
 	public void setEtat(String etat) {
 		this.etat = etat;
+	}
+	public ArrayList<String> getRoles() {
+		return roles;
+	}
+	public void setRoles(ArrayList<String> roles) {
+		this.roles = roles;
 	}
 
 }

@@ -20,9 +20,19 @@ public class InitServlet extends HttpServlet {
 	public void init(ServletConfig config) throws ServletException {
 		// Démarrage de la servlet
 		Logger.getLogger("Init").info("INIT DES CONNEXIONS COUCHBASE");
-		Accesseur.init();
+		AccesseurGenerique.getInstance().init();
 	
 		
+	}
+	
+	public void destroy() {
+		// Save dans un fichier 
+		try {
+			AccesseurGenerique.getInstance().sauvegarde();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
     /**
      * @see HttpServlet#HttpServlet()

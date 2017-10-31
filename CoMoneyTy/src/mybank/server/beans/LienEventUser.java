@@ -1,11 +1,13 @@
 package mybank.server.beans;
 
+import java.util.ArrayList;
 import java.util.UUID;
 
 public class LienEventUser implements ObjetId{
 	String id;
 	private String userId;
 	private String eventId;
+	ArrayList<String> roles;
 	String nomClasse="LienEventUser";
 	public String getId() {
 		return id;
@@ -14,6 +16,12 @@ public class LienEventUser implements ObjetId{
 		this.id = id;
 	}
 
+	public ArrayList<String> getRoles() {
+		return roles;
+	}
+	public void setRoles(ArrayList<String> roles) {
+		this.roles = roles;
+	}
 	public LienEventUser( String userId, String eventId) {
 		super();
 		this.id = UUID.randomUUID().toString();

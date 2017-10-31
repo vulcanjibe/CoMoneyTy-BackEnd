@@ -24,7 +24,7 @@ import mybank.server.beans.Invitation;
 import mybank.server.beans.Message;
 import mybank.server.beans.Relation;
 import mybank.server.beans.User;
-import mybank.server.rest.util.Accesseur;
+import mybank.server.rest.util.AccesseurGenerique;
 import mybank.server.rest.util.ConnexionUser;
 import mybank.server.rest.util.Reponse;
 import mybank.server.rest.util.Utilitaire;
@@ -40,13 +40,13 @@ public class InvitationRest {
         try {
             // Vérification de l'accès depuis un invitation connecté
             connexionUser = ConnexionUser.verificationConnexionUser(headers);
-            List<Invitation> liste = (List<Invitation>) Accesseur.getListe(Invitation.class);
+            List<Invitation> liste = (List<Invitation>) AccesseurGenerique.getInstance().getListe(Invitation.class);
             // Traitement de la log
-      //      Utilitaire.loggingRest(this.getClass(), "save", "", connexionUser.getUser());
+      //      Utilitaire.loggingRest(this.getClass(), "save", "", connexionUser);
             return Reponse.getResponseOK(liste);
         } catch (Exception e) {
             // Traitement de l'exception
-            Utilitaire.exceptionRest(e, this.getClass(), "save", "", connexionUser.getUser());
+            Utilitaire.exceptionRest(e, this.getClass(), "save", "", connexionUser);
             return Reponse.reponseKO(e);
         }
     }
@@ -59,15 +59,15 @@ public class InvitationRest {
         try {
             // Vérification de l'accès depuis un invitation connecté
             connexionUser = ConnexionUser.verificationConnexionUser(headers);
-            Invitation aInvitation= (Invitation) Accesseur.get(Invitation.class, strid);
+            Invitation aInvitation= (Invitation) AccesseurGenerique.getInstance().get(Invitation.class, strid);
             if(aInvitation==null)
                 throw new Exception("User inconnu");
             // Traitement de la log
-            Utilitaire.loggingRest(this.getClass(), "getById", strid, connexionUser.getUser());
+            Utilitaire.loggingRest(this.getClass(), "getById", strid, connexionUser);
             return Reponse.getResponseOK(aInvitation);
         } catch (Exception e) {
             // Traitement de l'exception
-            Utilitaire.exceptionRest(e, this.getClass(), "getById", strid, connexionUser.getUser());
+            Utilitaire.exceptionRest(e, this.getClass(), "getById", strid, connexionUser);
             return Reponse.reponseKO(e);
         }
     }
@@ -80,25 +80,25 @@ public class InvitationRest {
         try {
             // Vérification de l'accès depuis un invitation connecté
             connexionUser = ConnexionUser.verificationConnexionUser(headers);
-            strid=strid.substring(strid.indexOf("=")+1);
-            Invitation aInvitation= (Invitation) Accesseur.get(Invitation.class, strid);
+          //  strid=strid.substring(strid.indexOf("=")+1);
+            Invitation aInvitation= (Invitation) AccesseurGenerique.getInstance().get(Invitation.class, strid);
             aInvitation.setEtatReponse("Confirmee");
-            Accesseur.update(aInvitation);
+            AccesseurGenerique.getInstance().update(aInvitation);
             // Je met en relation les 2 users
             String idUser1 = aInvitation.getIdUser();
             String idUser2 = connexionUser.getUser().getId();
             
             Relation aRelation1 = new Relation(idUser1, idUser2);
-            Accesseur.save(aRelation1);
+            AccesseurGenerique.getInstance().save(aRelation1);
             Relation aRelation2 = new Relation(idUser2, idUser1);
-            Accesseur.save(aRelation2);
+            AccesseurGenerique.getInstance().save(aRelation2);
             
             // Traitement de la log
-            Utilitaire.loggingRest(this.getClass(), "getById", strid, connexionUser.getUser());
+            Utilitaire.loggingRest(this.getClass(), "getById", strid, connexionUser);
             return Reponse.getResponseOK(aInvitation);
         } catch (Exception e) {
             // Traitement de l'exception
-            Utilitaire.exceptionRest(e, this.getClass(), "getById", strid, connexionUser.getUser());
+            Utilitaire.exceptionRest(e, this.getClass(), "getById", strid, connexionUser);
             return Reponse.reponseKO(e);
         }
     }
@@ -114,14 +114,14 @@ public class InvitationRest {
             // Vérification de l'accès depuis un invitation connecté
             connexionUser = ConnexionUser.verificationConnexionUser(headers);
             String clauseWhere =new String(data, "UTF-8");
-            List<User> liste = (List<User>) Accesseur.getListeFiltre(User.class,clauseWhere );
+            List<User> liste = (List<User>) AccesseurGenerique.getInstance().getListeFiltre(User.class,clauseWhere );
 
             // Traitement de la log
-            Utilitaire.loggingRest(this.getClass(), "getListe", data, connexionUser.getUser());
+            Utilitaire.loggingRest(this.getClass(), "getListe", data, connexionUser);
             return Reponse.getResponseOK(liste);
         } catch (Exception e) {
             // Traitement de l'exception
-            Utilitaire.exceptionRest(e, this.getClass(), "getListe", data, connexionUser.getUser());
+            Utilitaire.exceptionRest(e, this.getClass(), "getListe", data, connexionUser);
             return Reponse.reponseKO(e);
         }
 
@@ -145,18 +145,18 @@ public class InvitationRest {
             Invitation aInvitation= mapper.readValue(new String(data, "UTF-8"), Invitation.class);
             if(aInvitation.getDate()==null)
             	aInvitation.setDate(new Date());
-           	Accesseur.save(aInvitation);
+           	AccesseurGenerique.getInstance().save(aInvitation);
             
            	// J'envoie un message d'invitation => Non car je connais pas son id!
 //           	Message message = new Message("Invitation � rejoindre "+connexionUser.getUser().getPrenom(), connexionUser.getUser(), aInvitation.getContact().getId());
-//           	Accesseur.save(message);
+//           	AccesseurGenerique.getInstance().save(message);
            	
             // Traitement de la log
-            Utilitaire.loggingRest(this.getClass(), "save", data, connexionUser.getUser());
+            Utilitaire.loggingRest(this.getClass(), "save", data, connexionUser);
            return Reponse.getResponseOK(aInvitation);
         } catch (Exception e) {
             // Traitement de l'exception
-            Utilitaire.exceptionRest(e, this.getClass(), "save", data, connexionUser.getUser());
+            Utilitaire.exceptionRest(e, this.getClass(), "save", data, connexionUser);
             return Reponse.reponseKO(e);
         }
     }
@@ -174,13 +174,13 @@ public class InvitationRest {
             connexionUser = ConnexionUser.verificationConnexionUser(headers);
             Invitation aInvitation = new Invitation();
             aInvitation.setId(strid);
-            Accesseur.delete(aInvitation);
+            AccesseurGenerique.getInstance().delete(aInvitation);
             // Traitement de la log
-            Utilitaire.loggingRest(this.getClass(), "delete", "invitation/"+strid, connexionUser.getUser());
+            Utilitaire.loggingRest(this.getClass(), "delete", "invitation/"+strid, connexionUser);
             return Reponse.getResponseOK(aInvitation);
         } catch (Exception e) {
             // Traitement de l'exception
-            Utilitaire.exceptionRest(e, this.getClass(), "delete","invitation/"+strid, connexionUser.getUser());
+            Utilitaire.exceptionRest(e, this.getClass(), "delete","invitation/"+strid, connexionUser);
             return Reponse.reponseKO(e);
         }
     }

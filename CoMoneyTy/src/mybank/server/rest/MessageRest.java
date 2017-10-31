@@ -24,7 +24,7 @@ import mybank.server.beans.Message;
 import mybank.server.beans.Message;
 import mybank.server.beans.Relation;
 import mybank.server.beans.User;
-import mybank.server.rest.util.Accesseur;
+import mybank.server.rest.util.AccesseurGenerique;
 import mybank.server.rest.util.ConnexionUser;
 import mybank.server.rest.util.Reponse;
 import mybank.server.rest.util.Utilitaire;
@@ -40,13 +40,13 @@ public class MessageRest {
         try {
             // Vérification de l'accès depuis un message connecté
             connexionUser = ConnexionUser.verificationConnexionUser(headers);
-            List<Message> liste = (List<Message>) Accesseur.getListe(Message.class);
+            List<Message> liste = (List<Message>) AccesseurGenerique.getInstance().getListe(Message.class);
             // Traitement de la log
-      //      Utilitaire.loggingRest(this.getClass(), "save", "", connexionUser.getUser());
+      //      Utilitaire.loggingRest(this.getClass(), "save", "", connexionUser);
             return Reponse.getResponseOK(liste);
         } catch (Exception e) {
             // Traitement de l'exception
-            Utilitaire.exceptionRest(e, this.getClass(), "save", "", connexionUser.getUser());
+            Utilitaire.exceptionRest(e, this.getClass(), "save", "", connexionUser);
             return Reponse.reponseKO(e);
         }
     }
@@ -59,15 +59,15 @@ public class MessageRest {
         try {
             // Vérification de l'accès depuis un message connecté
             connexionUser = ConnexionUser.verificationConnexionUser(headers);
-            Message aMessage= (Message) Accesseur.get(Message.class, strid);
+            Message aMessage= (Message) AccesseurGenerique.getInstance().get(Message.class, strid);
             if(aMessage==null)
                 throw new Exception("User inconnu");
             // Traitement de la log
-            Utilitaire.loggingRest(this.getClass(), "getById", strid, connexionUser.getUser());
+            Utilitaire.loggingRest(this.getClass(), "getById", strid, connexionUser);
             return Reponse.getResponseOK(aMessage);
         } catch (Exception e) {
             // Traitement de l'exception
-            Utilitaire.exceptionRest(e, this.getClass(), "getById", strid, connexionUser.getUser());
+            Utilitaire.exceptionRest(e, this.getClass(), "getById", strid, connexionUser);
             return Reponse.reponseKO(e);
         }
     }
@@ -85,14 +85,14 @@ public class MessageRest {
             // Vérification de l'accès depuis un message connecté
             connexionUser = ConnexionUser.verificationConnexionUser(headers);
             String clauseWhere =new String(data, "UTF-8");
-            List<User> liste = (List<User>) Accesseur.getListeFiltre(User.class,clauseWhere );
+            List<User> liste = (List<User>) AccesseurGenerique.getInstance().getListeFiltre(User.class,clauseWhere );
 
             // Traitement de la log
-            Utilitaire.loggingRest(this.getClass(), "getListe", data, connexionUser.getUser());
+            Utilitaire.loggingRest(this.getClass(), "getListe", data, connexionUser);
             return Reponse.getResponseOK(liste);
         } catch (Exception e) {
             // Traitement de l'exception
-            Utilitaire.exceptionRest(e, this.getClass(), "getListe", data, connexionUser.getUser());
+            Utilitaire.exceptionRest(e, this.getClass(), "getListe", data, connexionUser);
             return Reponse.reponseKO(e);
         }
 
@@ -116,13 +116,13 @@ public class MessageRest {
             Message aMessage= mapper.readValue(new String(data, "UTF-8"), Message.class);
             if(aMessage.getDate()==null)
             	aMessage.setDate(new Date());
-           	Accesseur.save(aMessage);
+           	AccesseurGenerique.getInstance().save(aMessage);
 
-            Utilitaire.loggingRest(this.getClass(), "save", data, connexionUser.getUser());
+            Utilitaire.loggingRest(this.getClass(), "save", data, connexionUser);
            return Reponse.getResponseOK(aMessage);
         } catch (Exception e) {
             // Traitement de l'exception
-            Utilitaire.exceptionRest(e, this.getClass(), "save", data, connexionUser.getUser());
+            Utilitaire.exceptionRest(e, this.getClass(), "save", data, connexionUser);
             return Reponse.reponseKO(e);
         }
     }
@@ -145,13 +145,13 @@ public class MessageRest {
             Message aMessage= mapper.readValue(new String(data, "UTF-8"), Message.class);
             if(aMessage.getDate()==null)
             	aMessage.setDate(new Date());
-           	Accesseur.update(aMessage);
+           	AccesseurGenerique.getInstance().update(aMessage);
 
-            Utilitaire.loggingRest(this.getClass(), "update", data, connexionUser.getUser());
+            Utilitaire.loggingRest(this.getClass(), "update", data, connexionUser);
            return Reponse.getResponseOK(aMessage);
         } catch (Exception e) {
             // Traitement de l'exception
-            Utilitaire.exceptionRest(e, this.getClass(), "update", data, connexionUser.getUser());
+            Utilitaire.exceptionRest(e, this.getClass(), "update", data, connexionUser);
             return Reponse.reponseKO(e);
         }
     }
@@ -167,13 +167,13 @@ public class MessageRest {
             connexionUser = ConnexionUser.verificationConnexionUser(headers);
             Message aMessage = new Message();
             aMessage.setId(strid);
-            Accesseur.delete(aMessage);
+            AccesseurGenerique.getInstance().delete(aMessage);
             // Traitement de la log
-            Utilitaire.loggingRest(this.getClass(), "delete", "message/"+strid, connexionUser.getUser());
+            Utilitaire.loggingRest(this.getClass(), "delete", "message/"+strid, connexionUser);
             return Reponse.getResponseOK(aMessage);
         } catch (Exception e) {
             // Traitement de l'exception
-            Utilitaire.exceptionRest(e, this.getClass(), "delete","message/"+strid, connexionUser.getUser());
+            Utilitaire.exceptionRest(e, this.getClass(), "delete","message/"+strid, connexionUser);
             return Reponse.reponseKO(e);
         }
     }

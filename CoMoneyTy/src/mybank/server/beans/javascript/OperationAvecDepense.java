@@ -6,6 +6,7 @@ import mybank.server.beans.Operation;
 public class OperationAvecDepense implements Comparable<OperationAvecDepense> {
 	Operation operation;
 	Depense depense;
+	String urlPhoto;
 	public OperationAvecDepense(Operation operation, Depense depense) {
 		super();
 		this.operation = operation;
@@ -30,6 +31,12 @@ public class OperationAvecDepense implements Comparable<OperationAvecDepense> {
 	public int compareTo(OperationAvecDepense o) {
 		// TODO Auto-generated method stub
 		return -operation.getDate().compareTo(o.operation.getDate());
+	}
+	public String getUrlPhoto() {
+		return urlPhoto;
+	}
+	public void setUrlPhoto(String urlPhoto) {
+		this.urlPhoto = urlPhoto;
 	}
 	
 }

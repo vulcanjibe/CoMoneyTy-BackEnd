@@ -19,7 +19,7 @@ import javax.ws.rs.core.UriInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import mybank.server.beans.LienEventUser;
-import mybank.server.rest.util.Accesseur;
+import mybank.server.rest.util.AccesseurGenerique;
 import mybank.server.rest.util.ConnexionUser;
 import mybank.server.rest.util.Reponse;
 import mybank.server.rest.util.Utilitaire;
@@ -37,13 +37,13 @@ public class LienEventUserRest {
         try {
             // Vérification de l'accès depuis un lienEventUser connecté
          //   connexionUser = ConnexionUser.verificationConnexionUser(headers);
-            List<LienEventUser> liste = (List<LienEventUser>) Accesseur.getListe(LienEventUser.class);
+            List<LienEventUser> liste = (List<LienEventUser>) AccesseurGenerique.getInstance().getListe(LienEventUser.class);
             // Traitement de la log
-      //      Utilitaire.loggingRest(this.getClass(), "save", "", connexionUser.getUser());
+      //      Utilitaire.loggingRest(this.getClass(), "save", "", connexionUser);
             return Reponse.getResponseOK(liste);
         } catch (Exception e) {
             // Traitement de l'exception
-            Utilitaire.exceptionRest(e, this.getClass(), "save", "", connexionUser.getUser());
+            Utilitaire.exceptionRest(e, this.getClass(), "save", "", connexionUser);
             return Reponse.reponseKO(e);
         }
     }
@@ -56,15 +56,15 @@ public class LienEventUserRest {
         try {
             // Vérification de l'accès depuis un lienEventUser connecté
             connexionUser = ConnexionUser.verificationConnexionUser(headers);
-            LienEventUser aLienEventUser = (LienEventUser) Accesseur.get(LienEventUser.class, strid);
+            LienEventUser aLienEventUser = (LienEventUser) AccesseurGenerique.getInstance().get(LienEventUser.class, strid);
             if(aLienEventUser==null)
                 throw new Exception("LienEventUser inconnu");
             // Traitement de la log
-            Utilitaire.loggingRest(this.getClass(), "getById", strid, connexionUser.getUser());
+            Utilitaire.loggingRest(this.getClass(), "getById", strid, connexionUser);
             return Reponse.getResponseOK(aLienEventUser);
         } catch (Exception e) {
             // Traitement de l'exception
-            Utilitaire.exceptionRest(e, this.getClass(), "getById", strid, connexionUser.getUser());
+            Utilitaire.exceptionRest(e, this.getClass(), "getById", strid, connexionUser);
             return Reponse.reponseKO(e);
         }
     }
@@ -79,14 +79,14 @@ public class LienEventUserRest {
             // Vérification de l'accès depuis un lienEventUser connecté
             connexionUser = ConnexionUser.verificationConnexionUser(headers);
             String clauseWhere =new String(data, "UTF-8");
-            List<LienEventUser> liste = (List<LienEventUser>) Accesseur.getListeFiltre(LienEventUser.class, clauseWhere);
+            List<LienEventUser> liste = (List<LienEventUser>) AccesseurGenerique.getInstance().getListeFiltre(LienEventUser.class, clauseWhere);
 
             // Traitement de la log
-            Utilitaire.loggingRest(this.getClass(), "getListe", data, connexionUser.getUser());
+            Utilitaire.loggingRest(this.getClass(), "getListe", data, connexionUser);
             return Reponse.getResponseOK(liste);
         } catch (Exception e) {
             // Traitement de l'exception
-            Utilitaire.exceptionRest(e, this.getClass(), "getListe", data, connexionUser.getUser());
+            Utilitaire.exceptionRest(e, this.getClass(), "getListe", data, connexionUser);
             return Reponse.reponseKO(e);
         }
 
@@ -103,11 +103,11 @@ public class LienEventUserRest {
             LienEventUser aLienEventUser = new LienEventUser();
 
             // Traitement de la log
-            Utilitaire.loggingRest(this.getClass(), "create", "", connexionUser.getUser());
+            Utilitaire.loggingRest(this.getClass(), "create", "", connexionUser);
             return Reponse.getResponseOK(aLienEventUser);
         } catch (Exception e) {
             // Traitement de l'exception
-            Utilitaire.exceptionRest(e, this.getClass(), "create", "", connexionUser.getUser());
+            Utilitaire.exceptionRest(e, this.getClass(), "create", "", connexionUser);
             return Reponse.reponseKO(e);
         }
     }
@@ -123,19 +123,19 @@ public class LienEventUserRest {
             connexionUser = ConnexionUser.verificationConnexionUser(headers);
             LienEventUser aLienEventUSer= mapper.readValue(new String(data, "UTF-8"), LienEventUser.class);
             
-            List<LienEventUser> list = Accesseur.getListeFiltre(LienEventUser.class, "userId='"+aLienEventUSer.getUserId()+"' and eventId='"+aLienEventUSer.getEventId()+"'");
+            List<LienEventUser> list = AccesseurGenerique.getInstance().getListeFiltre(LienEventUser.class, "userId='"+aLienEventUSer.getUserId()+"' and eventId='"+aLienEventUSer.getEventId()+"'");
             if(!list.isEmpty())
             	throw new Exception("Le user est d�j� affect�!!!");
             
-            Accesseur.save(aLienEventUSer);
+            AccesseurGenerique.getInstance().save(aLienEventUSer);
             
        
             // Traitement de la log
-            Utilitaire.loggingRest(this.getClass(), "save", data, connexionUser.getUser());
+            Utilitaire.loggingRest(this.getClass(), "save", data, connexionUser);
            return Reponse.getResponseOK(aLienEventUSer);
         } catch (Exception e) {
             // Traitement de l'exception
-            Utilitaire.exceptionRest(e, this.getClass(), "save", data, connexionUser.getUser());
+            Utilitaire.exceptionRest(e, this.getClass(), "save", data, connexionUser);
             return Reponse.reponseKO(e);
         }
     }
@@ -150,13 +150,13 @@ public class LienEventUserRest {
             // Vérification de l'accès depuis un event connecté
             connexionUser = ConnexionUser.verificationConnexionUser(headers);
             LienEventUser aEvent= mapper.readValue(new String(data, "UTF-8"), LienEventUser.class);
-            Accesseur.update(aEvent);
+            AccesseurGenerique.getInstance().update(aEvent);
             // Traitement de la log
-            Utilitaire.loggingRest(this.getClass(), "save", data, connexionUser.getUser());
+            Utilitaire.loggingRest(this.getClass(), "save", data, connexionUser);
            return Reponse.getResponseOK(aEvent);
         } catch (Exception e) {
             // Traitement de l'exception
-            Utilitaire.exceptionRest(e, this.getClass(), "save", data, connexionUser.getUser());
+            Utilitaire.exceptionRest(e, this.getClass(), "save", data, connexionUser);
             return Reponse.reponseKO(e);
         }
     }
@@ -173,13 +173,13 @@ public class LienEventUserRest {
             connexionUser = ConnexionUser.verificationConnexionUser(headers);
             LienEventUser aLienEventUser = new LienEventUser();
             aLienEventUser.setId(strid);
-            Accesseur.delete(aLienEventUser);
+            AccesseurGenerique.getInstance().delete(aLienEventUser);
             // Traitement de la log
-            Utilitaire.loggingRest(this.getClass(), "delete", strid, connexionUser.getUser());
+            Utilitaire.loggingRest(this.getClass(), "delete", strid, connexionUser);
             return Reponse.getResponseOK(aLienEventUser);
         } catch (Exception e) {
             // Traitement de l'exception
-            Utilitaire.exceptionRest(e, this.getClass(), "save", strid, connexionUser.getUser());
+            Utilitaire.exceptionRest(e, this.getClass(), "save", strid, connexionUser);
             return Reponse.reponseKO(e);
         }
     }

@@ -6,7 +6,7 @@ import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-public class Message implements ObjetId {
+public class Message implements ObjetId,Comparable<Message> {
 	String id;
 	String message;
 	String titre;
@@ -15,7 +15,8 @@ public class Message implements ObjetId {
 	User destinataire;
 	Date date;
 	String nomClasse="Message";
-	boolean dejaLu;
+	boolean dejaLu=false;
+	boolean actionRealise=false;
 	public String getId() {
 		return id;
 	}
@@ -83,5 +84,55 @@ public class Message implements ObjetId {
 	}
 	public void setTitre(String titre) {
 		this.titre = titre;
+	}
+	public boolean isActionRealise() {
+		return actionRealise;
+	}
+	public void setActionRealise(boolean actionRealise) {
+		this.actionRealise = actionRealise;
+	}
+	@Override
+	public int compareTo(Message other) {
+		if (date == null) {
+			if (other.date != null)
+				return 1;
+		} else if (!date.equals(other.date))
+			return date.compareTo(other.date);
+		if (id == null) {
+			if (other.id != null)
+				return 1;
+		} else if (!id.equals(other.id))
+			return id.compareTo(other.id);
+		return 0;
+	}
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((date == null) ? 0 : date.hashCode());
+		result = prime * result + ((id == null) ? 0 : id.hashCode());
+		return result;
+	}
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Message other = (Message) obj;
+		if (date == null) {
+			if (other.date != null)
+				return false;
+		} else if (!date.equals(other.date))
+			return false;
+		if (id == null) {
+			if (other.id != null)
+				return false;
+		} else if (!id.equals(other.id))
+			return false;
+		return true;
 	}	
+	
 }

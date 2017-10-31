@@ -23,23 +23,21 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import mybank.server.beans.ObjetId;
 
-public class Accesseur {
+public class Accesseur extends AccesseurGenerique {
 	
 	
 	private static final PersistTo PERSISTO = PersistTo.NONE;
-	//static Repository REPOSITORY = null;
 	public static Bucket BUCKET = null;
-	static HashMap<String,Integer> HASHID = new HashMap<>();
-	public final static String BUCKET_NAME = "beer-sample";
+	public final static String BUCKET_NAME = "comoneyty";
 	
 	
-	public static void deleteAll(Class aClass)
+	public  void deleteAll(Class aClass)
 	{
 		N1qlQuery query = N1qlQuery.simple("delete from `"+BUCKET_NAME+"` where nomClasse='"+aClass.getSimpleName()+"'",params);
 		N1qlQueryResult result = BUCKET.query(query);
 	
 	}
-	public static void deleteAll()
+	public  void deleteAll()
 	{
 		N1qlQuery query = N1qlQuery.simple("delete from `"+BUCKET_NAME+"`");
 		N1qlQueryResult result = BUCKET.query(query);
@@ -70,16 +68,17 @@ public class Accesseur {
 	
 
 	
-	public static void init() {
+	public  void init() {
 		CouchbaseEnvironment env = DefaultCouchbaseEnvironment.builder()
 	            .connectTimeout(30000) //10000ms = 10s, default is 5s
 	            .build();
 	
 		Cluster cluster = CouchbaseCluster.create(env,"couchbase.home");
+		cluster.authenticate("comoneyty", "robbynaish");
 		BUCKET = cluster.openBucket(BUCKET_NAME,30,TimeUnit.SECONDS);
 		//REPOSITORY = BUCKET.repository();
 	}
-	public static void save(ObjetId obj) throws Exception
+	public  void save(ObjetId obj) throws Exception
 	{
 		if(obj.getId()==null) {
 			String docId = UUID.randomUUID().toString();
@@ -92,7 +91,7 @@ public class Accesseur {
 		
 	}
 	
-	public static  void update(ObjetId obj) throws Exception
+	public   void update(ObjetId obj) throws Exception
 	{
 		ObjectMapper mapper = new ObjectMapper();
 		String json = mapper.writeValueAsString(obj);
@@ -100,14 +99,14 @@ public class Accesseur {
 	}
 	
 	
-	public static  ObjetId get(Class aClass,String idObj) throws Exception
+	public   ObjetId get(Class aClass,String idObj) throws Exception
 	{
 		N1qlQuery query = N1qlQuery.simple("select * from `"+BUCKET_NAME+"` where id = '"+idObj+ "' and nomClasse='"+aClass.getSimpleName()+"'");
 		N1qlQueryResult result = BUCKET.query(query);
 		List<N1qlQueryRow> list = result.allRows();
 		for(N1qlQueryRow row : list)
 		{
-			JsonObject json = row.value().getObject("beer-sample");
+			JsonObject json = row.value().getObject(BUCKET_NAME);
 			//json.getObject("beer-sample")
 			ObjectMapper mapper = new ObjectMapper();
 			ObjetId user = (ObjetId) mapper.readValue(json.toString(),aClass);
@@ -115,8 +114,8 @@ public class Accesseur {
 		}
 		return null;
 	}
-	private static N1qlParams params = N1qlParams.build().consistency(ScanConsistency.REQUEST_PLUS);
-	public static  ArrayList getListe(Class aClass) throws Exception
+	private  N1qlParams params = N1qlParams.build().consistency(ScanConsistency.REQUEST_PLUS);
+	public   ArrayList getListe(Class aClass) throws Exception
 	{
 		
 		N1qlQuery query = N1qlQuery.simple("select * from `"+BUCKET_NAME+"` where nomClasse='"+aClass.getSimpleName()+"'",params);
@@ -125,7 +124,7 @@ public class Accesseur {
 		ArrayList<Object> liste = new ArrayList<>();
 		for(N1qlQueryRow row : list)
 		{
-			JsonObject json = row.value().getObject("beer-sample");
+			JsonObject json = row.value().getObject(BUCKET_NAME);
 			//json.getObject("beer-sample")
 			ObjectMapper mapper = new ObjectMapper();
 			Object user = mapper.readValue(json.toString(),aClass);
@@ -134,7 +133,7 @@ public class Accesseur {
 		return liste;
 	}
 	
-	public static   ArrayList getListeFiltre(Class aClass,String filtre) throws Exception
+	public    ArrayList getListeFiltre(Class aClass,String filtre) throws Exception
 	{
 		String requete = "select * from `"+BUCKET_NAME+"` where nomClasse='"+aClass.getSimpleName()+"'";
 		requete+=" and "+filtre;
@@ -145,7 +144,7 @@ public class Accesseur {
 		ArrayList<Object> liste = new ArrayList<>();
 		for(N1qlQueryRow row : list)
 		{
-			JsonObject json = row.value().getObject("beer-sample");
+			JsonObject json = row.value().getObject(BUCKET_NAME);
 			//json.getObject("beer-sample")
 			ObjectMapper mapper = new ObjectMapper();
 			Object user = mapper.readValue(json.toString(),aClass);
@@ -154,7 +153,7 @@ public class Accesseur {
 		return liste;
 	}
 
-	public static  void delete(ObjetId obj) throws Exception
+	public   void delete(ObjetId obj) throws Exception
 	{
 		N1qlQuery query = N1qlQuery.simple("delete from `"+BUCKET_NAME+"` where id = '"+obj.getId()+ "' and nomClasse='"+obj.getNomClasse()+"'");
 		N1qlQueryResult result = BUCKET.query(query);
@@ -163,12 +162,17 @@ public class Accesseur {
 		
 	}
 
-	public static  void deleteWhere(Class aClass,String request) throws Exception
+	public   void deleteWhere(Class aClass,String request) throws Exception
 	{
 		N1qlQuery query = N1qlQuery.simple("delete from `"+BUCKET_NAME+"` where nomClasse='"+aClass.getSimpleName()+"' and "+request);
 		N1qlQueryResult result = BUCKET.query(query);
 		if(result.info().mutationCount()!=1)
 			throw new Exception("Souci dans le delete de "+aClass.getSimpleName());
+		
+	}
+	@Override
+	public void sauvegarde() throws Exception {
+		// TODO Auto-generated method stub
 		
 	}
 }

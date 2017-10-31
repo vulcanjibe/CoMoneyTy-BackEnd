@@ -13,6 +13,7 @@ public class Utilitaire {
 	//public static final SimpleDateFormat FORMAT_DATE = new SimpleDateFormat("dd/MM/yyyy");
 	public static final SimpleDateFormat FORMAT_DATE = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.S'Z'");
 	public static final SimpleDateFormat FORMAT_DATE_COURT = new SimpleDateFormat("dd/MM/yy");
+	public static final SimpleDateFormat FORMAT_DATE_HEURE = new SimpleDateFormat("dd/MM/yy HH:mm:ss");
 	public static final SimpleDateFormat FORMAT_DATE_STANDARD = new SimpleDateFormat("dd/MM/yyyy");
 	public static final SimpleDateFormat FORMAT_HEURE_COURT = new SimpleDateFormat("HH:mm");	
 	public static final SimpleDateFormat FORMAT_TIMESTAMP_FICHIER = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss");	
@@ -26,14 +27,15 @@ public class Utilitaire {
 				+ name.substring(1);
 	}
         // Traitement des exceptions REST
-        public static void exceptionRest(Exception e,Class entite,String method, byte[] data,User user)
+        public static void exceptionRest(Exception e,Class entite,String method, byte[] data,ConnexionUser connexionUser)
         {
         	e.printStackTrace();
             try {
                 String str = new String(data, "UTF-8");
-                String nom="Server";
-                if(user!=null)
-                	nom=user.getNom();
+                String nom="Unknown";
+                if(connexionUser!=null)
+                	if(connexionUser.getUser()!=null)
+                		nom=connexionUser.getUser().getNom();
                 Logger.getLogger(entite.getName()).log(Level.SEVERE, "User : "+nom+" - "+method+" - "+str);
             } catch (Exception ex) {
                 Logger.getLogger(Utilitaire.class.getName()).log(Level.SEVERE, "conversion data impossible", ex);
@@ -41,24 +43,28 @@ public class Utilitaire {
         }
 
         // Traitement des logs REST
-        public static void loggingRest(Class entite,String method, byte[] data,User user)
+        public static void loggingRest(Class entite,String method, byte[] data,ConnexionUser connexionUser)
         {
             try {
                 String str = new String(data, "UTF-8");
-                Logger.getLogger(entite.getName()).log(Level.WARNING, "User : "+user.getNom()+" - "+method+" - "+str);
+                String nom = "unknown";
+                if(connexionUser!=null)
+                	if(connexionUser.getUser()!=null)
+                		nom=connexionUser.getUser().getNom();
+                Logger.getLogger(entite.getName()).log(Level.WARNING, "User : "+nom+" - "+method+" - "+str);
             } catch (Exception ex) {
                 Logger.getLogger(Utilitaire.class.getName()).log(Level.SEVERE, "conversion data impossible", ex);
             }
         }
       // Traitement des exceptions REST
-        public static void exceptionRest(Exception e,Class entite,String method, String data,User user)
+        public static void exceptionRest(Exception e,Class entite,String method, String data,ConnexionUser connexionUser)
         {
-            exceptionRest(e,entite,method,data.getBytes(),user);
+            exceptionRest(e,entite,method,data.getBytes(),connexionUser);
         }
 
         // Traitement des logs REST
-        public static void loggingRest(Class entite,String method, String data,User user)
+        public static void loggingRest(Class entite,String method, String data,ConnexionUser connexionUser)
         {
-            loggingRest( entite, method, data.getBytes(),user);
+            loggingRest( entite, method, data.getBytes(),connexionUser);
         }
 }

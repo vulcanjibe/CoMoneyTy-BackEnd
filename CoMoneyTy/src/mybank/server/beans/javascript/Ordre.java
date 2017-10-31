@@ -8,6 +8,7 @@ public class Ordre {
 	Mouvement mouvement;
 	User emetteur;
 	Event event;
+	String nomClasse="Ordre";
 	public Mouvement getMouvement() {
 		return mouvement;
 	}
@@ -34,6 +35,12 @@ public class Ordre {
 	}
 	public Ordre() {
 		super();
+	}
+	public String getNomClasse() {
+		return nomClasse;
+	}
+	public void setNomClasse(String nomClasse) {
+		this.nomClasse = nomClasse;
 	}
 	
 }

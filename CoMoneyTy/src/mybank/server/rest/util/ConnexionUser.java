@@ -19,12 +19,37 @@ public class ConnexionUser {
     public static ConnexionUser getUser(String token) {
         return LISTE_USER.get(token);
     }
+    
+    public static int purge() {
+    	int size = LISTE_USER.size();
+    	LISTE_USER.clear();
+    	return size;
+    }
 
-    public static ConnexionUser connect(String token, User aUser) {
+    public static ConnexionUser connect(String token, User aUser) throws Exception {
         String cle = token;
         ConnexionUser connexionUser = new ConnexionUser(aUser);
         connexionUser.setTimeDerniereConnexion(new Date());
         LISTE_USER.put(cle, connexionUser);
+        UserStore us = new UserStore();
+        us.idUser=aUser.getId();
+        us.timestamp=new Date();
+        us.id = token;
+        try {
+        	AccesseurGenerique.getInstance().save(us);
+        } catch(Exception e)
+        {
+        	// DÈj‡ connectÈ???
+        	us = (UserStore) AccesseurGenerique.getInstance().get(UserStore.class, token);
+        	if(us!=null)
+        	{
+        		aUser = (User)AccesseurGenerique.getInstance().get(User.class,us.getIdUser());
+        		connexionUser = new ConnexionUser(aUser);
+        		connexionUser.setTimeDerniereConnexion(new Date());
+        		LISTE_USER.put(cle, connexionUser);
+        	}
+        	
+        }
         return connexionUser;
     }
 
@@ -116,17 +141,12 @@ public class ConnexionUser {
             token = token.substring(token.indexOf("=") + 1);
             ConnexionUser user = getUser(token);
             if (user == null) {
-                if (headers.getRequestHeader("host").get(0).contains("localhost")) {
-                    User aUser = new User();
-                    if (!token.contains("|")) {
-                        throw new Exception("User non connect√©");
-                    }
-                    aUser.setId(token.split("\\|")[1]);
-                    user = ConnexionUser.connect(token, aUser);
-
-                } else {
-                    throw new Exception("User non connect√©");
-                }
+            	// Stateless
+            	// Je cherche cette connection dans la base
+            	UserStore theUserStore = (UserStore)AccesseurGenerique.getInstance().get(UserStore.class, token);
+            	User theUser = (User)AccesseurGenerique.getInstance().get(User.class, theUserStore.idUser);
+            	user = connect(token, theUser);
+            	user.setTimeDerniereConnexion(theUserStore.getTimestamp());
             }
 
             if ((new Date().getTime() - user.getTimeDerniereConnexion()
@@ -135,9 +155,14 @@ public class ConnexionUser {
                 throw new Exception(
                         "User d√©connect√© : Temps limite d'inactivit√© ("
                         + ConnexionUser.INACTIVITE_MAX / 1000 / 60
-                        + "mn) d√©pass√©...");
+                        + "mn) dÈpassÈ©...");
             }
             user.setTimeDerniereConnexion(new Date());
+            UserStore us = new UserStore();
+            us.id=token;
+            us.idUser=user.getUser().getId();
+            us.timestamp=user.getTimeDerniereConnexion();
+            AccesseurGenerique.getInstance().update(us);
             return user;
         } else {
             throw new Exception("User non connect√©");
