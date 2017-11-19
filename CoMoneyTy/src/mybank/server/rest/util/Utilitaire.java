@@ -10,6 +10,7 @@ import mybank.server.rest.util.Reponse;
 
 
 public class Utilitaire {
+	public static String REPERTOIRE_IMAGE = "D:\\CoMoneyTy\\upload-image";
 	//public static final SimpleDateFormat FORMAT_DATE = new SimpleDateFormat("dd/MM/yyyy");
 	public static final SimpleDateFormat FORMAT_DATE = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.S'Z'");
 	public static final SimpleDateFormat FORMAT_DATE_COURT = new SimpleDateFormat("dd/MM/yy");

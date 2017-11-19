@@ -151,7 +151,7 @@ public class DepenseRest {
             		String dataImage = tab1;
             		dataImage = dataImage.substring(dataImage.indexOf(",")+1);
             		String fileName = tab0;
-           			FileOutputStream targetFile = new FileOutputStream("../standalone/deployments/Image.war/"+fileName);
+           			FileOutputStream targetFile = new FileOutputStream(Utilitaire.REPERTOIRE_IMAGE+"/"+fileName);
            			byte[] rawImage = Base64.getDecoder().decode(dataImage);
         			targetFile.write(rawImage);
         			targetFile.close();
@@ -231,7 +231,7 @@ public class DepenseRest {
         System.out.println(fileDetails.getFileName());
         byte[] buffer = new byte[uploadedInputStream.available()];
         //File targetFile = new File("src/main/resources/targetFile.tmp");
-        File targetFile = new File("../standalone/deployments/Image.war/depense/"+fileDetails.getFileName()); 
+        File targetFile = new File(Utilitaire.REPERTOIRE_IMAGE+"/"+fileDetails.getFileName()); 
         java.nio.file.Files.copy(
         		uploadedInputStream, 
           targetFile.toPath(), 

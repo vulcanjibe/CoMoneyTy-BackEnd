@@ -1,5 +1,6 @@
 package mybank.server.rest.util;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.logging.Logger;
 

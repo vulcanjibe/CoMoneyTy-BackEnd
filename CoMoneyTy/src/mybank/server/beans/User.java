@@ -11,6 +11,7 @@ public class User  implements ObjetId {
 	String email;
 	String urlAvatar;
 	String phone;
+	String codecourt;
 	String nomClasse="User";
 	String iban;
 	public String getNom() {
@@ -99,6 +100,12 @@ public class User  implements ObjetId {
 	}
 	public void setIban(String iban) {
 		this.iban = iban;
+	}
+	public String getCodecourt() {
+		return codecourt;
+	}
+	public void setCodecourt(String codecourt) {
+		this.codecourt = codecourt;
 	}
 
 

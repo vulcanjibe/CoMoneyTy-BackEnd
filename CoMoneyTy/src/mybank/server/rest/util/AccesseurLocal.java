@@ -136,7 +136,13 @@ public class AccesseurLocal extends AccesseurGenerique {
 							String valueBasse = champs[0].split("\\.")[1];
 							ObjectMapper mapper = new ObjectMapper();
 							JsonNode node =mapper.readTree(json);
-							String str = node.get(valueHaute).get(valueBasse).toString();
+							JsonNode jsonNode = node.get(valueHaute);
+							String str="";
+							if(jsonNode!=null) { 
+								JsonNode jsonNode2 = jsonNode.get(valueBasse);
+								if(jsonNode2!=null)
+									str = jsonNode2.toString();
+							}
 							if (str.startsWith("\""))
 								str = str.substring(1);
 							if (str.endsWith("\""))

@@ -189,7 +189,7 @@ public class EventRest {
 					dataImage = dataImage.substring(dataImage.indexOf(",") + 1);
 					String fileName = tab0;
 					FileOutputStream targetFile = new FileOutputStream(
-							"../standalone/deployments/Image.war/" + fileName);
+							Utilitaire.REPERTOIRE_IMAGE+"/" + fileName);
 					byte[] rawImage = Base64.getDecoder().decode(dataImage);
 					targetFile.write(rawImage);
 					targetFile.close();
@@ -400,6 +400,7 @@ public class EventRest {
 				mouvement.setCommentaire("Demande de paiement pour " + event.getLibelle());
 				AccesseurGenerique.getInstance().save(mouvement);
 				// ENvoie d'un message
+				User userEmmeteur = (User) AccesseurGenerique.getInstance().get(User.class, mouvement.getIdDestinataire());
 				Message aMessage = new Message(
 						"Demande de paiement de " + new DecimalFormat("0.00").format(mouvement.getMontant())
 								+ "€ pour l'event " + event.getLibelle(),
@@ -407,7 +408,7 @@ public class EventRest {
 								+ "€ pour l'event " + event.getLibelle() + " du "
 								+ Utilitaire.FORMAT_DATE_COURT.format(event.getDate())
 								+ ". Tu trouveras la demande dans ton carnet d'ordre! Merci d'avance.",
-						emetteur);
+								userEmmeteur);
 				User user = (User) AccesseurGenerique.getInstance().get(User.class, mouvement.getIdEmetteur());
 				aMessage.setDestinataire(user);
 
@@ -798,7 +799,7 @@ public class EventRest {
 		System.out.println(fileDetails.getFileName());
 		// byte[] buffer = new byte[uploadedInputStream.available()];
 		// File targetFile = new File("src/main/resources/targetFile.tmp");
-		File targetFile = new File("../standalone/deployments/Image.war/event/" + fileDetails.getFileName());
+		File targetFile = new File(Utilitaire.REPERTOIRE_IMAGE+"/" + fileDetails.getFileName());
 		long res = java.nio.file.Files.copy(uploadedInputStream, targetFile.toPath(),
 				StandardCopyOption.REPLACE_EXISTING);
 		System.out.println("WRITE = " + res + " dans " + targetFile.toPath());

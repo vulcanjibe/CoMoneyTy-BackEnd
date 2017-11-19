@@ -15,6 +15,7 @@ import com.couchbase.client.java.query.N1qlQueryRow;
 import mybank.server.beans.type.TypeOperation;
 import mybank.server.rest.util.Accesseur;
 import mybank.server.rest.util.AccesseurGenerique;
+import mybank.server.rest.util.PasswordEncoder;
 import mybank.server.rest.util.Utilitaire;
 
 public class GenerateurTest {
@@ -32,32 +33,28 @@ public class GenerateurTest {
 	}
 
 	public static void initialisation() throws Exception {
-		String password = Base64.getEncoder().encodeToString(new String("CoMoneyTy").getBytes());
-
+		//String password = Base64.getEncoder().encodeToString(new String("CoMoneyTy").getBytes());
+		String password = PasswordEncoder.GenerePasswordHash("CoMoneyTy");
 		User user1 = new User("Bergère", "Tony", "Tony", password, "tony.bergere@gmail.com", "user/avatarTony.png",
 				"0642663846");
 		User user2 = new User("Combey", "Hervé", "Herve", password, "hcombey@gmail.com", "user/avatarHerve.png",
 				"0682667921");
-		User user3 = new User("Bergère", "Fatia", "Fatia", password, "fatia.bergere@gmail.com", "user/avatarFatia.png");
-		User user4 = new User("Combey", "Sylvie", "Sylvie", password, "sylvie.combey@yahoo.fr",
-				"user/avatarSylvie.png");
-		User user5 = new User("Combey", "Clément", "Clement", password, "clement.combey@gmail.com",
-				"user/avatarClement.png");
 		User user6 = new User("Boldron", "François", "Francois", password, "francois.boldron@labanquepostale.fr",
 				"user/Letter-F-icon.png", "0643213056");
 		User user7 = new User("Fay", "Stephane", "Stephane", password, "stfay@netc.fr", "user/Letter-S-icon.png",
 				"0669082337");
 
+		User user0 = new User("Administrateur", "CoMoneyTy", "CoMoneyTy", password, "hcombey@gmail.com", "user/Neo.png","0682667921");
+		user0.setId("1111-1111-1111-1111");
+
 		ArrayList<User> listeUser = new ArrayList<User>();
 
+		listeUser.add(user0);
 		listeUser.add(user1);
 		listeUser.add(user2);
-		listeUser.add(user3);
-		listeUser.add(user4);
-		listeUser.add(user5);
 		listeUser.add(user6);
 		listeUser.add(user7);
-
+		
 		for (User user : listeUser)
 			user.setIban(donneIBAN());
 
@@ -95,20 +92,15 @@ public class GenerateurTest {
 		ArrayList<User> participants2 = new ArrayList<User>();
 		participants2.add(user1);
 		participants2.add(user2);
-		participants2.add(user4);
-		participants2.add(user5);
 		event2.setParticipants(participants2);
 
 		ArrayList<User> participants3 = new ArrayList<User>();
 		participants3.add(user1);
 		participants3.add(user2);
-		participants3.add(user3);
 		event3.setParticipants(participants3);
 
 		ArrayList<User> participants4 = new ArrayList<User>();
 		participants4.add(user2);
-		participants4.add(user4);
-		participants4.add(user5);
 		event4.setParticipants(participants4);
 
 		ArrayList<User> participants5 = new ArrayList<User>();

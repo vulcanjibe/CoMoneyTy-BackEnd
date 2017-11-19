@@ -3,8 +3,10 @@ package mybank.server.rest;
 import java.io.File;
 import java.io.InputStream;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 
 import javax.ws.rs.Consumes;
@@ -23,7 +25,11 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import mybank.server.beans.Depense;
+import mybank.server.beans.Event;
 import mybank.server.beans.GenerateurTest;
+import mybank.server.beans.LienEventUser;
+import mybank.server.beans.Mouvement;
 import mybank.server.beans.User;
 import mybank.server.rest.util.AccesseurGenerique;
 import mybank.server.rest.util.ConnexionUser;
@@ -98,9 +104,118 @@ public class UtilitaireRest {
         }
     }
     @GET
-    @Path("/checkServeur")
+    @Path("/checkPerformance")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response checkInfra(@Context HttpHeaders headers, @Context UriInfo uriInfo) {
+    public Response checkPerformance(@Context HttpHeaders headers, @Context UriInfo uriInfo) {
+        ConnexionUser connexionUser = null;
+        try {
+        	
+            // Vérification de l'accès depuis un depense connecté
+            Date dateReceptionServeur = new Date();
+            
+            Date date = new Date();
+    		// Vérification de l'accès depuis un user connecté
+			connexionUser = ConnexionUser.verificationConnexionUser(headers);
+			String idUser = connexionUser.getUser().getId();
+			// On cherche les liens EventUset
+			List<LienEventUser> liste = (List<LienEventUser>) AccesseurGenerique.getInstance().getListeFiltre(LienEventUser.class,
+					"userId='" + idUser + "'");
+			System.err.println("RECUP LISTE EVENT : "+(new Date().getTime()-date.getTime()));
+            date = new Date();
+			ArrayList<Event> listeEvent = new ArrayList<>();
+			// Recupération des Event
+			int nb = 1;
+			for (LienEventUser lien : liste) {
+				Event event = (Event) AccesseurGenerique.getInstance().get(Event.class, lien.getEventId());
+
+				if(lien.getRoles()==null || lien.getRoles().isEmpty()) {
+					
+					lien.setRoles(new ArrayList<>());
+					lien.getRoles().add("Participant");
+				}
+				
+				event.setRoles(lien.getRoles());
+				listeEvent.add(event);
+				System.err.println("   EVENT "+(nb++)+" : "+(new Date().getTime()-date.getTime()));
+	            date = new Date();
+
+			}
+            System.err.println("FIN ENRICHISSEMENT LISTE EVENT : "+(new Date().getTime()-date.getTime()));
+            date = new Date();
+
+			// Pour chaque event je calcule le montant
+			for (Event event : listeEvent) {
+				List<Depense> listeDepense = (List<Depense>) AccesseurGenerique.getInstance().getListeFiltre(Depense.class,
+						"idEvent='" + event.getId() + "'");
+				double montantEvent = 0;
+				double montantPaye = 0;
+				for (Depense depense : listeDepense) {
+					montantEvent += depense.getMontant();
+					if (depense.getIdPayeur().equals(idUser))
+						montantPaye += depense.getMontant();
+				}
+				event.setMontantTotal(montantEvent);
+
+				List<LienEventUser> listeUser = (List<LienEventUser>) AccesseurGenerique.getInstance().getListeFiltre(LienEventUser.class,
+						"eventId='" + event.getId() + "'");
+				double montantDu = (montantEvent / listeUser.size()) - montantPaye;
+				event.setMontantDu(montantDu);
+				event.setMontantDepense(montantPaye);
+			}
+
+            System.err.println("AJOUT DEPENSE : "+(new Date().getTime()-date.getTime()));
+            date = new Date();
+
+			// Check de la cloture des event + prise en compte des paiements
+			for (Event event : listeEvent) {
+				List<Mouvement> listeMouvement = (List<Mouvement>) AccesseurGenerique.getInstance().getListeFiltre(Mouvement.class,
+						"idEvent='" + event.getId() + "'");
+				if (event.getEtat().equalsIgnoreCase("En cours de solde")) {
+					boolean tousRealise = true;
+					for (Mouvement mouvement : listeMouvement) {
+						if (!mouvement.getEtat().equals("R�alis�")) {
+							tousRealise = false;
+							break;
+						}
+					}
+					if (tousRealise) {
+						event.setEtat("Clos");
+						AccesseurGenerique.getInstance().update(event);
+					}
+				}
+				for (Mouvement mouvement : listeMouvement) {
+					if (mouvement.getEtat().equals("R�alis�")) {
+						if (mouvement.getIdEmetteur().equals(idUser)) {
+							event.setMontantDepense(event.getMontantDepense() + mouvement.getMontant());
+							event.setMontantDu(event.getMontantDu() - mouvement.getMontant());
+						}
+						if (mouvement.getIdDestinataire().equals(idUser)) {
+							event.setMontantDepense(event.getMontantDepense() - mouvement.getMontant());
+							event.setMontantDu(event.getMontantDu() + mouvement.getMontant());
+						}
+
+					}
+				}
+			}
+			
+            System.err.println("AJOUT MOUVEMENT : "+(new Date().getTime()-date.getTime()));
+            date = new Date();
+
+			 Date dateFinTraitement = new Date();
+			 HashMap<String,Long> hash = new HashMap<>();
+			 hash.put("start", dateReceptionServeur.getTime());
+			 hash.put("stop", dateFinTraitement.getTime());
+             return Reponse.getResponseOK(hash);
+        } catch (Exception e) {
+            // Traitement de l'exception
+            Utilitaire.exceptionRest(e, this.getClass(), "purgeServeur", "", connexionUser);
+            return Reponse.reponseKO(e);
+        }
+    }   
+    @GET
+    @Path("/checkReseau")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response checkReseau(@Context HttpHeaders headers, @Context UriInfo uriInfo) {
         ConnexionUser connexionUser = null;
         try {
             // Vérification de l'accès depuis un depense connecté
@@ -142,7 +257,7 @@ public class UtilitaireRest {
         System.out.println(fileDetails.getFileName());
         byte[] buffer = new byte[uploadedInputStream.available()];
         //File targetFile = new File("src/main/resources/targetFile.tmp");
-        File targetFile = new File("../standalone/deployments/Image.war/depense/"+fileDetails.getFileName()); 
+        File targetFile = new File(Utilitaire.REPERTOIRE_IMAGE+"/"+fileDetails.getFileName()); 
         java.nio.file.Files.copy(
         		uploadedInputStream, 
           targetFile.toPath(), 

@@ -26,8 +26,10 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 
+import mybank.server.beans.Event;
 import mybank.server.beans.HistoriqueEvent;
 import mybank.server.beans.LienEventUser;
+import mybank.server.beans.Message;
 import mybank.server.beans.Mouvement;
 import mybank.server.beans.Operation;
 import mybank.server.beans.User;
@@ -38,272 +40,283 @@ import mybank.server.rest.util.ConnexionUser;
 import mybank.server.rest.util.Reponse;
 import mybank.server.rest.util.Utilitaire;
 import mybank.server.rest.util.json.DateDeserializer;
+import mybank.server.rest.util.json.DoubleSerializer;
+
 @Path("/mouvement")
 public class MouvementRest {
 
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response get(@Context HttpHeaders headers, @Context UriInfo uriInfo) {
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response get(@Context HttpHeaders headers, @Context UriInfo uriInfo) {
 
-        ConnexionUser connexionUser = null;
-        try {
-            // V√©rification de l'acc√®s depuis un mouvement connect√©
-            connexionUser = ConnexionUser.verificationConnexionUser(headers);
-            List<Mouvement> liste = (List<Mouvement>) AccesseurGenerique.getInstance().getListe(Mouvement.class);
-            // Traitement de la log
-      //      Utilitaire.loggingRest(this.getClass(), "save", "", connexionUser);
-            return Reponse.getResponseOK(liste);
-        } catch (Exception e) {
-            // Traitement de l'exception
-            Utilitaire.exceptionRest(e, this.getClass(), "save", "", connexionUser);
-            return Reponse.reponseKO(e);
-        }
-    }
+		ConnexionUser connexionUser = null;
+		try {
+			// V√©rification de l'acc√®s depuis un mouvement connect√©
+			connexionUser = ConnexionUser.verificationConnexionUser(headers);
+			List<Mouvement> liste = (List<Mouvement>) AccesseurGenerique.getInstance().getListe(Mouvement.class);
+			// Traitement de la log
+			// Utilitaire.loggingRest(this.getClass(), "save", "", connexionUser);
+			return Reponse.getResponseOK(liste);
+		} catch (Exception e) {
+			// Traitement de l'exception
+			Utilitaire.exceptionRest(e, this.getClass(), "save", "", connexionUser);
+			return Reponse.reponseKO(e);
+		}
+	}
 
-    @GET
-    @Path("/{id}")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getById(@Context HttpHeaders headers, @Context UriInfo uriInfo, @PathParam("id") String strid) {
-        ConnexionUser connexionUser = null;
-        try {
-            // V√©rification de l'acc√®s depuis un mouvement connect√©
-            connexionUser = ConnexionUser.verificationConnexionUser(headers);
-            Mouvement aMouvement= (Mouvement) AccesseurGenerique.getInstance().get(Mouvement.class, strid);
-            if(aMouvement==null)
-                throw new Exception("User inconnu");
-            // Traitement de la log
-            Utilitaire.loggingRest(this.getClass(), "getById", strid, connexionUser);
-            return Reponse.getResponseOK(aMouvement);
-        } catch (Exception e) {
-            // Traitement de l'exception
-            Utilitaire.exceptionRest(e, this.getClass(), "getById", strid, connexionUser);
-            return Reponse.reponseKO(e);
-        }
-    }
+	@GET
+	@Path("/{id}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getById(@Context HttpHeaders headers, @Context UriInfo uriInfo, @PathParam("id") String strid) {
+		ConnexionUser connexionUser = null;
+		try {
+			// V√©rification de l'acc√®s depuis un mouvement connect√©
+			connexionUser = ConnexionUser.verificationConnexionUser(headers);
+			Mouvement aMouvement = (Mouvement) AccesseurGenerique.getInstance().get(Mouvement.class, strid);
+			if (aMouvement == null)
+				throw new Exception("User inconnu");
+			// Traitement de la log
+			Utilitaire.loggingRest(this.getClass(), "getById", strid, connexionUser);
+			return Reponse.getResponseOK(aMouvement);
+		} catch (Exception e) {
+			// Traitement de l'exception
+			Utilitaire.exceptionRest(e, this.getClass(), "getById", strid, connexionUser);
+			return Reponse.reponseKO(e);
+		}
+	}
 
-    @POST
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getListe(@Context HttpHeaders headers, @Context UriInfo uriInfo, byte[] data) {
+	@POST
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getListe(@Context HttpHeaders headers, @Context UriInfo uriInfo, byte[] data) {
 
-        ObjectMapper mapper = new ObjectMapper();
-        ConnexionUser connexionUser = null;
-        try {
-            // V√©rification de l'acc√®s depuis un mouvement connect√©
-            connexionUser = ConnexionUser.verificationConnexionUser(headers);
-            String clauseWhere =new String(data, "UTF-8");
-            List<User> liste = (List<User>) AccesseurGenerique.getInstance().getListeFiltre(User.class,clauseWhere );
+		ObjectMapper mapper = new ObjectMapper();
+		ConnexionUser connexionUser = null;
+		try {
+			// V√©rification de l'acc√®s depuis un mouvement connect√©
+			connexionUser = ConnexionUser.verificationConnexionUser(headers);
+			String clauseWhere = new String(data, "UTF-8");
+			List<User> liste = (List<User>) AccesseurGenerique.getInstance().getListeFiltre(User.class, clauseWhere);
 
-            // Traitement de la log
-            Utilitaire.loggingRest(this.getClass(), "getListe", data, connexionUser);
-            return Reponse.getResponseOK(liste);
-        } catch (Exception e) {
-            // Traitement de l'exception
-            Utilitaire.exceptionRest(e, this.getClass(), "getListe", data, connexionUser);
-            return Reponse.reponseKO(e);
-        }
+			// Traitement de la log
+			Utilitaire.loggingRest(this.getClass(), "getListe", data, connexionUser);
+			return Reponse.getResponseOK(liste);
+		} catch (Exception e) {
+			// Traitement de l'exception
+			Utilitaire.exceptionRest(e, this.getClass(), "getListe", data, connexionUser);
+			return Reponse.reponseKO(e);
+		}
 
-    }
+	}
 
-    @GET
-    @Path("/create")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response create(@Context HttpHeaders headers, @Context UriInfo uriInfo) {
-        ConnexionUser connexionUser = null;
-        try {
-            // V√©rification de l'acc√®s depuis un mouvement connect√©
-            connexionUser = ConnexionUser.verificationConnexionUser(headers);
-            User aMouvement= new User();
+	@GET
+	@Path("/create")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response create(@Context HttpHeaders headers, @Context UriInfo uriInfo) {
+		ConnexionUser connexionUser = null;
+		try {
+			// V√©rification de l'acc√®s depuis un mouvement connect√©
+			connexionUser = ConnexionUser.verificationConnexionUser(headers);
+			User aMouvement = new User();
 
-            // Traitement de la log
-            Utilitaire.loggingRest(this.getClass(), "create", "", connexionUser);
-            return Reponse.getResponseOK(aMouvement);
-        } catch (Exception e) {
-            // Traitement de l'exception
-            Utilitaire.exceptionRest(e, this.getClass(), "create", "", connexionUser);
-            return Reponse.reponseKO(e);
-        }
-    }
+			// Traitement de la log
+			Utilitaire.loggingRest(this.getClass(), "create", "", connexionUser);
+			return Reponse.getResponseOK(aMouvement);
+		} catch (Exception e) {
+			// Traitement de l'exception
+			Utilitaire.exceptionRest(e, this.getClass(), "create", "", connexionUser);
+			return Reponse.reponseKO(e);
+		}
+	}
 
-    @POST
-    @Path("/save")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response save1(@Context HttpHeaders headers, @Context UriInfo uriInfo, byte[] data) {
-        ObjectMapper mapper = new ObjectMapper();
-        SimpleModule module = new SimpleModule();
-        module.addDeserializer(java.util.Date.class, new DateDeserializer());
-        mapper.registerModule(module);
-        ConnexionUser connexionUser = null;
-        try {
-            // V√©rification de l'acc√®s depuis un mouvement connect√©
-            connexionUser = ConnexionUser.verificationConnexionUser(headers);
-            Mouvement aMouvement= mapper.readValue(new String(data, "UTF-8"), Mouvement.class);
-            if(aMouvement.getIdDestinataire()==null)
-            {
-            	//Je le partage ‡ tous
-            	// RÈcupÈration de tous les participants
-                List<LienEventUser> liste = (List<LienEventUser>) AccesseurGenerique.getInstance().getListeFiltre(LienEventUser.class, "eventId='"+aMouvement.getIdEvent()+"'");
-                double montantPartage = aMouvement.getMontant()/liste.size(); 
-               // Recup√©ration des Event
-                for(LienEventUser lien : liste) {
-                	Mouvement newMouvement = new Mouvement();
-                	newMouvement.setCommentaire(aMouvement.getCommentaire());
-                	newMouvement.setIdDestinataire(lien.getUserId());
-                	newMouvement.setIdEmetteur(aMouvement.getIdEmetteur());
-                	newMouvement.setIdEvent(aMouvement.getIdEvent());
-                	newMouvement.setMontant(montantPartage);
-                	newMouvement.setDate(aMouvement.getDate());
-                	AccesseurGenerique.getInstance().save(newMouvement);
-                }
-            } else {
-            	AccesseurGenerique.getInstance().save(aMouvement);
-            }
-            
-        
-            // Traitement de la log
-            Utilitaire.loggingRest(this.getClass(), "save", data, connexionUser);
-           return Reponse.getResponseOK(aMouvement);
-        } catch (Exception e) {
-            // Traitement de l'exception
-            Utilitaire.exceptionRest(e, this.getClass(), "save", data, connexionUser);
-            return Reponse.reponseKO(e);
-        }
-    }
-    @PUT
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response save(@Context HttpHeaders headers, @Context UriInfo uriInfo, byte[] data) {
-        ObjectMapper mapper = new ObjectMapper();
-        SimpleModule module = new SimpleModule();
-        module.addDeserializer(java.util.Date.class, new DateDeserializer());
-        mapper.registerModule(module);
-        ConnexionUser connexionUser = null;
-        try {
-            // V√©rification de l'acc√®s depuis un mouvement connect√©
-            connexionUser = ConnexionUser.verificationConnexionUser(headers);
-            Mouvement aMouvement= mapper.readValue(new String(data, "UTF-8"), Mouvement.class);
-         
-           	AccesseurGenerique.getInstance().save(aMouvement);
-            
-           	HistoriqueEvent.historise(connexionUser, aMouvement, "Mise en bilan de l'event",aMouvement.getIdEvent());
-            // Traitement de la log
-            Utilitaire.loggingRest(this.getClass(), "save", data, connexionUser);
-           return Reponse.getResponseOK(aMouvement);
-        } catch (Exception e) {
-            // Traitement de l'exception
-            Utilitaire.exceptionRest(e, this.getClass(), "save", data, connexionUser);
-            return Reponse.reponseKO(e);
-        }
-    }
-    @PUT
-    @Path("/{id}")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response update(@Context HttpHeaders headers, @Context UriInfo uriInfo,  @PathParam("id") String strid, byte[] data) {
-        ObjectMapper mapper = new ObjectMapper();
-        SimpleModule module = new SimpleModule();
-        module.addDeserializer(java.util.Date.class, new DateDeserializer());
-        mapper.registerModule(module);
-        ConnexionUser connexionUser = null;
-        try {
-            // V√©rification de l'acc√®s depuis un mouvement connect√©
-            connexionUser = ConnexionUser.verificationConnexionUser(headers);
-            Mouvement aMouvement= mapper.readValue(new String(data, "UTF-8"), Mouvement.class);
-            AccesseurGenerique.getInstance().update(aMouvement);
-            // Traitement de la log
-            HistoriqueEvent.historise(connexionUser, aMouvement, "Mise ‡ jour du mouvement",aMouvement.getIdEvent());
-            Utilitaire.loggingRest(this.getClass(), "save", data, connexionUser);
-           return Reponse.getResponseOK(aMouvement);
-        } catch (Exception e) {
-            // Traitement de l'exception
-            Utilitaire.exceptionRest(e, this.getClass(), "save", data, connexionUser);
-            return Reponse.reponseKO(e);
-        }
-    }
+	@POST
+	@Path("/save")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response save1(@Context HttpHeaders headers, @Context UriInfo uriInfo, byte[] data) {
+		ObjectMapper mapper = new ObjectMapper();
+		SimpleModule module = new SimpleModule();
+		module.addDeserializer(java.util.Date.class, new DateDeserializer());
+		mapper.registerModule(module);
+		ConnexionUser connexionUser = null;
+		try {
+			// V√©rification de l'acc√®s depuis un mouvement connect√©
+			connexionUser = ConnexionUser.verificationConnexionUser(headers);
+			Mouvement aMouvement = mapper.readValue(new String(data, "UTF-8"), Mouvement.class);
+			if (aMouvement.getIdDestinataire() == null) {
+				// Je le partage ‡ tous
+				// RÈcupÈration de tous les participants
+				List<LienEventUser> liste = (List<LienEventUser>) AccesseurGenerique.getInstance()
+						.getListeFiltre(LienEventUser.class, "eventId='" + aMouvement.getIdEvent() + "'");
+				double montantPartage = aMouvement.getMontant() / liste.size();
+				// Recup√©ration des Event
+				for (LienEventUser lien : liste) {
+					Mouvement newMouvement = new Mouvement();
+					newMouvement.setCommentaire(aMouvement.getCommentaire());
+					newMouvement.setIdDestinataire(lien.getUserId());
+					newMouvement.setIdEmetteur(aMouvement.getIdEmetteur());
+					newMouvement.setIdEvent(aMouvement.getIdEvent());
+					newMouvement.setMontant(montantPartage);
+					newMouvement.setDate(aMouvement.getDate());
+					AccesseurGenerique.getInstance().save(newMouvement);
+				}
+			} else {
+				AccesseurGenerique.getInstance().save(aMouvement);
+			}
 
-    @POST
-    @Path("/reglementParVirement")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response reglementParVirement(@Context HttpHeaders headers, @Context UriInfo uriInfo, byte[] data) {
-        ObjectMapper mapper = new ObjectMapper();
-        SimpleModule module = new SimpleModule();
-        module.addDeserializer(java.util.Date.class, new DateDeserializer());
-        mapper.registerModule(module);
-        ConnexionUser connexionUser = null;
-        try {
-            // V√©rification de l'acc√®s depuis un mouvement connect√©
-            connexionUser = ConnexionUser.verificationConnexionUser(headers);
-            Ordre aOrdre = mapper.readValue(new String(data, "UTF-8"), Ordre.class);
-            Mouvement mouvement = aOrdre.getMouvement();
-            mouvement.setEtat("RÈalisÈ");
-            AccesseurGenerique.getInstance().update(mouvement);
-            
-            // CrÈation de l'opÈration
-            User emetteur = connexionUser.getUser();
-            User destinataire = aOrdre.getEmetteur();
-            Operation aOperationEmis = new Operation(emetteur.getId(), new Date(), "Virement Èmis pour "+aOrdre.getEvent().getLibelle(), -mouvement.getMontant());
-            aOperationEmis.setIbanDestinataire(destinataire.getIban());
-            aOperationEmis.setIbanEmetteur(emetteur.getIban());
-            aOperationEmis.setTypeOperation(new TypeOperation(1, "Virement Èmis"));
-  
-            Operation aOperationRecu = new Operation(destinataire.getId(), new Date(), "Virement recu pour "+aOrdre.getEvent().getLibelle(), mouvement.getMontant());
-            aOperationRecu.setIbanDestinataire(destinataire.getIban());
-            aOperationRecu.setIbanEmetteur(emetteur.getIban());
-            aOperationEmis.setTypeOperation(new TypeOperation(1, "Virement recu"));
-  
-            AccesseurGenerique.getInstance().save(aOperationRecu);
-            AccesseurGenerique.getInstance().save(aOperationEmis);
-            // Traitement de la log
-            Utilitaire.loggingRest(this.getClass(), "reglementParVirement", data, connexionUser);
-           return Reponse.getResponseOK(mouvement);
-        } catch (Exception e) {
-            // Traitement de l'exception
-            Utilitaire.exceptionRest(e, this.getClass(), "reglementParVirement", data, connexionUser);
-            return Reponse.reponseKO(e);
-        }
-    }
-    @DELETE
-    @Path("/delete")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response delete(@Context HttpHeaders headers, @Context UriInfo uriInfo, byte[] data) {
-        ObjectMapper mapper = new ObjectMapper();
-        ConnexionUser connexionUser = null;
-        try {
-            // V√©rification de l'acc√®s depuis un mouvement connect√©
-            connexionUser = ConnexionUser.verificationConnexionUser(headers);
-            User aMouvement= mapper.readValue(new String(data, "UTF-8"), User.class);
-            AccesseurGenerique.getInstance().delete(aMouvement);
-            // Traitement de la log
-            Utilitaire.loggingRest(this.getClass(), "save", data, connexionUser);
-            return Reponse.getResponseOK(aMouvement);
-        } catch (Exception e) {
-            // Traitement de l'exception
-            Utilitaire.exceptionRest(e, this.getClass(), "save", data, connexionUser);
-            return Reponse.reponseKO(e);
-        }
-    }
-    
+			// Traitement de la log
+			Utilitaire.loggingRest(this.getClass(), "save", data, connexionUser);
+			return Reponse.getResponseOK(aMouvement);
+		} catch (Exception e) {
+			// Traitement de l'exception
+			Utilitaire.exceptionRest(e, this.getClass(), "save", data, connexionUser);
+			return Reponse.reponseKO(e);
+		}
+	}
 
-   
+	@PUT
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response save(@Context HttpHeaders headers, @Context UriInfo uriInfo, byte[] data) {
+		ObjectMapper mapper = new ObjectMapper();
+		SimpleModule module = new SimpleModule();
+		module.addDeserializer(java.util.Date.class, new DateDeserializer());
+		mapper.registerModule(module);
+		ConnexionUser connexionUser = null;
+		try {
+			// V√©rification de l'acc√®s depuis un mouvement connect√©
+			connexionUser = ConnexionUser.verificationConnexionUser(headers);
+			Mouvement aMouvement = mapper.readValue(new String(data, "UTF-8"), Mouvement.class);
 
-    @POST
-    @Path("upload")
-    @Consumes(MediaType.MULTIPART_FORM_DATA)
-    public Response uploadFile(@FormDataParam("file") InputStream uploadedInputStream,
-                               @FormDataParam("file") FormDataContentDisposition fileDetails) throws Exception {
+			AccesseurGenerique.getInstance().save(aMouvement);
+
+			// Traitement de la log
+			Utilitaire.loggingRest(this.getClass(), "save", data, connexionUser);
+			return Reponse.getResponseOK(aMouvement);
+		} catch (Exception e) {
+			// Traitement de l'exception
+			Utilitaire.exceptionRest(e, this.getClass(), "save", data, connexionUser);
+			return Reponse.reponseKO(e);
+		}
+	}
+
+	@PUT
+	@Path("/{id}")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response update(@Context HttpHeaders headers, @Context UriInfo uriInfo, @PathParam("id") String strid,
+			byte[] data) {
+		ObjectMapper mapper = new ObjectMapper();
+		SimpleModule module = new SimpleModule();
+		module.addDeserializer(java.util.Date.class, new DateDeserializer());
+		mapper.registerModule(module);
+		ConnexionUser connexionUser = null;
+		try {
+			// V√©rification de l'acc√®s depuis un mouvement connect√©
+			connexionUser = ConnexionUser.verificationConnexionUser(headers);
+			Mouvement aMouvement = mapper.readValue(new String(data, "UTF-8"), Mouvement.class);
+			AccesseurGenerique.getInstance().update(aMouvement);
+			// Traitement de la log
+			if (aMouvement.getEtat().equals("RÈalisÈ")) {
+				User emetteur = (User) AccesseurGenerique.getInstance().get(User.class, aMouvement.getIdEmetteur());
+				User destinataire = (User) AccesseurGenerique.getInstance().get(User.class,
+						aMouvement.getIdDestinataire());
+				Event aEvent = (Event) AccesseurGenerique.getInstance().get(Event.class, aMouvement.getIdEvent());
+				Message aMessage = new Message("Paiement rÈalisÈ",
+						emetteur.getPrenom() + " a rÈglÈ par virement son solde pour l'event " + aEvent.getLibelle(),
+						emetteur);
+				aMessage.setDestinataire(destinataire);
+				AccesseurGenerique.getInstance().save(aMessage);
+
+				HistoriqueEvent.historise(connexionUser, aMouvement,
+						"Paiement effectuÈ " + DoubleSerializer.formatter.format(aMouvement.getMontant()) + "Ä",
+						aMouvement.getIdEvent());
+			} else
+				HistoriqueEvent.historise(connexionUser, aMouvement, "Mise ‡ jour du mouvement",
+						aMouvement.getIdEvent());
+			Utilitaire.loggingRest(this.getClass(), "save", data, connexionUser);
+			return Reponse.getResponseOK(aMouvement);
+		} catch (Exception e) {
+			// Traitement de l'exception
+			Utilitaire.exceptionRest(e, this.getClass(), "save", data, connexionUser);
+			return Reponse.reponseKO(e);
+		}
+	}
+
+	@POST
+	@Path("/reglementParVirement")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response reglementParVirement(@Context HttpHeaders headers, @Context UriInfo uriInfo, byte[] data) {
+		ObjectMapper mapper = new ObjectMapper();
+		SimpleModule module = new SimpleModule();
+		module.addDeserializer(java.util.Date.class, new DateDeserializer());
+		mapper.registerModule(module);
+		ConnexionUser connexionUser = null;
+		try {
+			// V√©rification de l'acc√®s depuis un mouvement connect√©
+			connexionUser = ConnexionUser.verificationConnexionUser(headers);
+			Ordre aOrdre = mapper.readValue(new String(data, "UTF-8"), Ordre.class);
+			Mouvement mouvement = aOrdre.getMouvement();
+			mouvement.setEtat("RÈalisÈ");
+			AccesseurGenerique.getInstance().update(mouvement);
+
+			// CrÈation de l'opÈration
+			User emetteur = connexionUser.getUser();
+			User destinataire = aOrdre.getEmetteur();
+			Operation aOperationEmis = new Operation(emetteur.getId(), new Date(),
+					"Virement Èmis pour " + aOrdre.getEvent().getLibelle(), -mouvement.getMontant());
+			aOperationEmis.setIbanDestinataire(destinataire.getIban());
+			aOperationEmis.setIbanEmetteur(emetteur.getIban());
+			aOperationEmis.setTypeOperation(new TypeOperation(1, "Virement Èmis"));
+
+			Operation aOperationRecu = new Operation(destinataire.getId(), new Date(),
+					"Virement recu pour " + aOrdre.getEvent().getLibelle(), mouvement.getMontant());
+			aOperationRecu.setIbanDestinataire(destinataire.getIban());
+			aOperationRecu.setIbanEmetteur(emetteur.getIban());
+			aOperationEmis.setTypeOperation(new TypeOperation(1, "Virement recu"));
+
+			AccesseurGenerique.getInstance().save(aOperationRecu);
+			AccesseurGenerique.getInstance().save(aOperationEmis);
+
+			// Envoi d'un message pour avoir le destinatire
+			Message aMessage = new Message("Virement transmis", emetteur.getPrenom()
+					+ " a rÈglÈ par virement son solde pour l'event " + aOrdre.getEvent().getLibelle(), emetteur);
+			aMessage.setDestinataire(destinataire);
+			AccesseurGenerique.getInstance().save(aMessage);
+			// Traitement de la log
+			HistoriqueEvent.historise(connexionUser, mouvement,
+					"Paiement effectuÈ " + DoubleSerializer.formatter.format(mouvement.getMontant()) + "Ä",
+					mouvement.getIdEvent());
+
+			Utilitaire.loggingRest(this.getClass(), "reglementParVirement", data, connexionUser);
+			return Reponse.getResponseOK(mouvement);
+		} catch (Exception e) {
+			// Traitement de l'exception
+			Utilitaire.exceptionRest(e, this.getClass(), "reglementParVirement", data, connexionUser);
+			return Reponse.reponseKO(e);
+		}
+	}
+
+	@DELETE
+	@Path("/delete")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response delete(@Context HttpHeaders headers, @Context UriInfo uriInfo, byte[] data) {
+		ObjectMapper mapper = new ObjectMapper();
+		ConnexionUser connexionUser = null;
+		try {
+			// V√©rification de l'acc√®s depuis un mouvement connect√©
+			connexionUser = ConnexionUser.verificationConnexionUser(headers);
+			User aMouvement = mapper.readValue(new String(data, "UTF-8"), User.class);
+			AccesseurGenerique.getInstance().delete(aMouvement);
+			// Traitement de la log
+			Utilitaire.loggingRest(this.getClass(), "save", data, connexionUser);
+			return Reponse.getResponseOK(aMouvement);
+		} catch (Exception e) {
+			// Traitement de l'exception
+			Utilitaire.exceptionRest(e, this.getClass(), "save", data, connexionUser);
+			return Reponse.reponseKO(e);
+		}
+	}
 
 
-        System.out.println(fileDetails.getFileName());
-        byte[] buffer = new byte[uploadedInputStream.available()];
-        //File targetFile = new File("src/main/resources/targetFile.tmp");
-        File targetFile = new File("../standalone/deployments/Image.war/mouvement/"+fileDetails.getFileName()); 
-        java.nio.file.Files.copy(
-        		uploadedInputStream, 
-          targetFile.toPath(), 
-          StandardCopyOption.REPLACE_EXISTING);
-       
-        uploadedInputStream.close();
-        return Response.ok().build();
-    }
 }

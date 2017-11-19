@@ -41,6 +41,7 @@ import mybank.server.beans.javascript.TableauMessage;
 import mybank.server.beans.javascript.TableauOperation;
 import mybank.server.rest.util.AccesseurGenerique;
 import mybank.server.rest.util.ConnexionUser;
+import mybank.server.rest.util.PasswordEncoder;
 import mybank.server.rest.util.Reponse;
 import mybank.server.rest.util.Utilitaire;
 
@@ -143,18 +144,34 @@ public class UserRest {
 			// VÃ©rification de l'accÃ¨s depuis un user connectÃ©
 
 			User aUser = mapper.readValue(new String(data, "UTF-8"), User.class);
+			String phone = aUser.getPhone();
+			if (phone != null) {
+				phone = phone.replaceAll(" ", "");
+				phone = phone.replaceAll("\\\\.", "");
+				phone = phone.substring(phone.length() - 9);
+				phone = "0" + phone;
+			}
+			aUser.setPhone(phone);
 			if (aUser.getUrlAvatar() == null)
 				aUser.setUrlAvatar("user/standard.png");
 			if (aUser.getLogin() == null)
 				aUser.setLogin(aUser.getEmail());
-			String passwordEncode = Base64.getEncoder().encodeToString(aUser.getPassword().getBytes());
-			aUser.setPassword(passwordEncode);
+			
+			String passwordHash = PasswordEncoder.GenerePasswordHash(aUser.getPassword());
+			aUser.setPassword(passwordHash);
 			AccesseurGenerique.getInstance().save(aUser);
 			String key = UUID.randomUUID().toString().toUpperCase();
 			connexionUser = ConnexionUser.connect(key, aUser);
+			
+			aUser.setPassword("Faut Pas déconner!!!");
+
 			HashMap<String, Object> maHash = new HashMap<String, Object>();
 			maHash.put("id", key);
 			maHash.put("user", aUser);
+			User admin = (User) AccesseurGenerique.getInstance().get(User.class, "1111-1111-1111-1111");
+			Message aMessage = new Message("Bienvenue sur CoMoneyTy", "Bonjour, bienvenue sur CoMoneyTy. Pour agrandir votre réseau rapidement, complétez votre profil en ajoutant votre numéro de téléphone!", admin);
+			aMessage.setDestinataire(aUser);
+			AccesseurGenerique.getInstance().save(aMessage);
 			// Traitement de la log
 			Utilitaire.loggingRest(this.getClass(), "save", data, connexionUser);
 			return Reponse.getResponseOK(maHash);
@@ -176,9 +193,25 @@ public class UserRest {
 			// VÃ©rification de l'accÃ¨s depuis un user connectÃ©
 			connexionUser = ConnexionUser.verificationConnexionUser(headers);
 			User aUser = mapper.readValue(new String(data, "UTF-8"), User.class);
-			String passEnClair = aUser.getPassword();
-			String passwordEncode = Base64.getEncoder().encodeToString(aUser.getPassword().getBytes());
-
+			String phone = aUser.getPhone();
+			phone = phone.replaceAll(" ", "");
+			phone = phone.replaceAll("\\\\.", "");
+			phone = phone.substring(phone.length() - 9);
+			phone = "0" + phone;
+			aUser.setPhone(phone);
+			
+			if(aUser.getPassword()==null || aUser.getPassword().length()==0 || aUser.getPassword().equalsIgnoreCase("--Unchanged--"))
+			{
+				// recup du password!
+				User userReel = (User)AccesseurGenerique.getInstance().get(User.class, aUser.getId());
+				aUser.setPassword(userReel.getPassword());				
+			} else
+			{
+				// New password
+				String passwordEncode = PasswordEncoder.GenerePasswordHash(aUser.getPassword());
+				aUser.setPassword(passwordEncode);
+			}
+			
 			String urlAvatar = aUser.getUrlAvatar();
 			if (urlAvatar != null && urlAvatar.length() > 50) {
 				if (urlAvatar.contains("==")) {
@@ -188,8 +221,7 @@ public class UserRest {
 					String dataImage = tab1;
 					dataImage = dataImage.substring(dataImage.indexOf(",") + 1);
 					String fileName = tab0;
-					FileOutputStream targetFile = new FileOutputStream(
-							"../standalone/deployments/Image.war/" + fileName);
+					FileOutputStream targetFile = new FileOutputStream(Utilitaire.REPERTOIRE_IMAGE + "/" + fileName);
 					byte[] rawImage = Base64.getDecoder().decode(dataImage);
 					targetFile.write(rawImage);
 					targetFile.close();
@@ -197,14 +229,11 @@ public class UserRest {
 				}
 			}
 
-			aUser.setPassword(passwordEncode);
+		//	aUser.setPassword(connexionUser.getUser().getPassword());
 			AccesseurGenerique.getInstance().update(aUser);
 
 			// Traitement de la log
 			Utilitaire.loggingRest(this.getClass(), "save", data, connexionUser);
-			aUser.setPassword(passEnClair);
-			// Attention il faut relogguer le User
-			connexionUser.setUser(aUser);
 			return Reponse.getResponseOK(aUser);
 		} catch (Exception e) {
 			// Traitement de l'exception
@@ -246,27 +275,27 @@ public class UserRest {
 			connexionUser = ConnexionUser.verificationConnexionUser(headers);
 
 			// On cherche les liens EventUset
-			List<LienEventUser> liste = (List<LienEventUser>) AccesseurGenerique.getInstance().getListeFiltre(LienEventUser.class,
-					"userId='" + idUser + "'");
+			List<LienEventUser> liste = (List<LienEventUser>) AccesseurGenerique.getInstance()
+					.getListeFiltre(LienEventUser.class, "userId='" + idUser + "'");
 			ArrayList<Event> listeEvent = new ArrayList<>();
 			// RecupÃ©ration des Event
 			for (LienEventUser lien : liste) {
 				Event event = (Event) AccesseurGenerique.getInstance().get(Event.class, lien.getEventId());
 
-				if(lien.getRoles()==null || lien.getRoles().isEmpty()) {
-					
+				if (lien.getRoles() == null || lien.getRoles().isEmpty()) {
+
 					lien.setRoles(new ArrayList<>());
 					lien.getRoles().add("Participant");
 				}
-				
+
 				event.setRoles(lien.getRoles());
 				listeEvent.add(event);
 			}
 
 			// Pour chaque event je calcule le montant
 			for (Event event : listeEvent) {
-				List<Depense> listeDepense = (List<Depense>) AccesseurGenerique.getInstance().getListeFiltre(Depense.class,
-						"idEvent='" + event.getId() + "'");
+				List<Depense> listeDepense = (List<Depense>) AccesseurGenerique.getInstance()
+						.getListeFiltre(Depense.class, "idEvent='" + event.getId() + "'");
 				double montantEvent = 0;
 				double montantPaye = 0;
 				for (Depense depense : listeDepense) {
@@ -276,8 +305,8 @@ public class UserRest {
 				}
 				event.setMontantTotal(montantEvent);
 
-				List<LienEventUser> listeUser = (List<LienEventUser>) AccesseurGenerique.getInstance().getListeFiltre(LienEventUser.class,
-						"eventId='" + event.getId() + "'");
+				List<LienEventUser> listeUser = (List<LienEventUser>) AccesseurGenerique.getInstance()
+						.getListeFiltre(LienEventUser.class, "eventId='" + event.getId() + "'");
 				double montantDu = (montantEvent / listeUser.size()) - montantPaye;
 				event.setMontantDu(montantDu);
 				event.setMontantDepense(montantPaye);
@@ -285,8 +314,8 @@ public class UserRest {
 
 			// Check de la cloture des event + prise en compte des paiements
 			for (Event event : listeEvent) {
-				List<Mouvement> listeMouvement = (List<Mouvement>) AccesseurGenerique.getInstance().getListeFiltre(Mouvement.class,
-						"idEvent='" + event.getId() + "'");
+				List<Mouvement> listeMouvement = (List<Mouvement>) AccesseurGenerique.getInstance()
+						.getListeFiltre(Mouvement.class, "idEvent='" + event.getId() + "'");
 				if (event.getEtat().equalsIgnoreCase("En cours de solde")) {
 					boolean tousRealise = true;
 					for (Mouvement mouvement : listeMouvement) {
@@ -451,8 +480,8 @@ public class UserRest {
 			connexionUser = ConnexionUser.verificationConnexionUser(headers);
 
 			// On cherche les liens EventUset
-			List<Invitation> listeInvitation = (List<Invitation>) AccesseurGenerique.getInstance().getListeFiltre(Invitation.class,
-					"idUser='" + idUser + "'");
+			List<Invitation> listeInvitation = (List<Invitation>) AccesseurGenerique.getInstance()
+					.getListeFiltre(Invitation.class, "idUser='" + idUser + "'");
 
 			// Traitement de la log
 			return Reponse.getResponseOK(listeInvitation);
@@ -479,18 +508,32 @@ public class UserRest {
 					"destinataire.id='" + idUser + "'");
 
 			// Je recherche aussi les invitations
-			List<Invitation> listeInvitation = (List<Invitation>) AccesseurGenerique.getInstance().getListeFiltre(Invitation.class,
-					"etatReponse='Invitation envoyée'");
+			List<Invitation> listeInvitation = (List<Invitation>) AccesseurGenerique.getInstance()
+					.getListeFiltre(Invitation.class, "etatReponse='Invitation envoyée'");
 			// Je cherche les correspondances
 			for (Invitation invitation : listeInvitation) {
 				if (invitation.getEtatReponse().startsWith("Invitation envoyée")) {
 					Contact aContact = invitation.getContact();
+					String phone1 = aContact.getPhoneNumber();
+					String phone2 = theUser.getPhone();
+					if (phone1 != null) {
+						phone1 = phone1.replaceAll(" ", "");
+						phone1 = phone1.replaceAll("\\\\.", "");
+						phone1 = phone1.substring(phone1.length() - 9);
+						phone1 = "0" + phone1;
+					}
+					if (phone2 != null) {
+						phone2 = phone2.replaceAll(" ", "");
+						phone2 = phone2.replaceAll("\\\\.", "");
+						phone2 = phone2.substring(phone2.length() - 9);
+						phone2 = "0" + phone2;
+					}
+
 					if ((aContact.getEmail() != null && aContact.getEmail().equalsIgnoreCase(theUser.getEmail()))
-							|| (aContact.getPhoneNumber() != null && theUser.getPhone() != null
-									&& aContact.getPhoneNumber().replaceAll(" ", "")
-											.equalsIgnoreCase(theUser.getPhone().replaceAll(" ", "")))) {
+							|| (phone1 != null && phone2 != null && phone1.equalsIgnoreCase(phone2))) {
 						// Recup de l'emetteur complet
-						User userEmetteur = (User) AccesseurGenerique.getInstance().get(User.class, invitation.getIdUser());
+						User userEmetteur = (User) AccesseurGenerique.getInstance().get(User.class,
+								invitation.getIdUser());
 						Message aMessage = new Message("Invitation de " + userEmetteur.getPrenom() + " en attente...",
 								"Invitation de " + userEmetteur.getPrenom() + " en attente...", userEmetteur);
 						aMessage.setMessageCache(Reponse.getJson(invitation));
@@ -539,36 +582,193 @@ public class UserRest {
 			User theUser = connexionUser.getUser();
 			// On cherche les liens EventUset
 			List<Message> listeMessage = (List<Message>) AccesseurGenerique.getInstance().getListeFiltre(Message.class,
-					"destinataire.id='" + idUser + "' and dejaLu=false");
-
-			int nbMessageNonLu = listeMessage.size();
-			List<Invitation> listeInvitation = (List<Invitation>) AccesseurGenerique.getInstance().getListeFiltre(Invitation.class,
-					"etatReponse='Invitation envoyée'");
-			// Je cherche les correspondances
-			for (Invitation invitation : listeInvitation) {
-				if (invitation.getEtatReponse().startsWith("Invitation envoyée")) {
-					Contact aContact = invitation.getContact();
-					if ((aContact.getEmail() != null && aContact.getEmail().equalsIgnoreCase(theUser.getEmail()))
-							|| (aContact.getPhoneNumber() != null && theUser.getPhone() != null
-									&& aContact.getPhoneNumber().replaceAll(" ", "")
-											.equalsIgnoreCase(theUser.getPhone().replaceAll(" ", "")))) {
-						// Recup de l'emetteur complet
-						nbMessageNonLu++;
-					}
-				}
+					"destinataire.id='" + idUser + "'");
+			int nbMessageNonLu = 0;
+			for (Message msg : listeMessage) {
+				if (!msg.isDejaLu() || (msg.getMessageCache()!=null && !msg.isActionRealise()))
+					nbMessageNonLu++;
 			}
 
-			
+		
+			try {
+				List<Invitation> listeInvitation = (List<Invitation>) AccesseurGenerique.getInstance()
+						.getListeFiltre(Invitation.class, "etatReponse='Invitation envoyée'");
+				// Je cherche les correspondances
+				for (Invitation invitation : listeInvitation) {
+					if (invitation.getEtatReponse().startsWith("Invitation envoyée")) {
+						Contact aContact = invitation.getContact();
+						String phone1 = aContact.getPhoneNumber();
+						String phone2 = theUser.getPhone();
+						if (phone1 != null) {
+							phone1 = phone1.replaceAll(" ", "");
+							phone1 = phone1.replaceAll("\\\\.", "");
+							phone1 = phone1.substring(phone1.length() - 9);
+							phone1 = "0" + phone1;
+						}
+						if (phone2 != null) {
+							phone2 = phone2.replaceAll(" ", "");
+							phone2 = phone2.replaceAll("\\\\.", "");
+							phone2 = phone2.substring(phone2.length() - 9);
+							phone2 = "0" + phone2;
+						}
+
+						if ((aContact.getEmail() != null && aContact.getEmail().equalsIgnoreCase(theUser.getEmail()))
+								|| (phone1 != null && phone2 != null && phone1.equalsIgnoreCase(phone2))) {
+							// Recup de l'emetteur complet
+							nbMessageNonLu++;
+						}
+					}
+				}
+			} catch (Exception e) {
+
+			}
+
 			// Traitement de la log
-			return Reponse.getResponseOK("NbMessageNonLu="+nbMessageNonLu);
+			return Reponse.getResponseOK("NbMessageNonLu=" + nbMessageNonLu);
 		} catch (Exception e) {
 			// Traitement de l'exception
-			Utilitaire.exceptionRest(e, this.getClass(), "/{id}/getNbMessagesNonLuDeUserId", "/" + idUser + "/getNbMessagesNonLuDeUserId",
-					connexionUser);
+			Utilitaire.exceptionRest(e, this.getClass(), "/{id}/getNbMessagesNonLuDeUserId",
+					"/" + idUser + "/getNbMessagesNonLuDeUserId", connexionUser);
 			return Reponse.reponseKO(e);
 		}
 	}
-	
+
+	@GET
+	@Path("/{id}/synthese")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getSynthese(@Context HttpHeaders headers, @Context UriInfo uriInfo,
+			@PathParam("id") String idUser) {
+		ConnexionUser connexionUser = null;
+		try {
+			// VÃ©rification de l'accÃ¨s depuis un user connectÃ©
+			connexionUser = ConnexionUser.verificationConnexionUser(headers);
+			User theUser = connexionUser.getUser();
+			// On cherche les liens EventUset
+			List<LienEventUser> liste = (List<LienEventUser>) AccesseurGenerique.getInstance()
+					.getListeFiltre(LienEventUser.class, "userId='" + idUser + "'");
+			ArrayList<Event> listeEvent = new ArrayList<>();
+			// RecupÃ©ration des Event
+			for (LienEventUser lien : liste) {
+				Event event = (Event) AccesseurGenerique.getInstance().get(Event.class, lien.getEventId());
+				if (event.getEtat().equals("Clos") || event.getEtat().equals("Annulé"))
+					continue;
+				listeEvent.add(event);
+			}
+
+			int montantQueJeDois = 0;
+			int montantQuonMeDoit = 0;
+
+			// Pour chaque event je calcule le montant
+			for (Event event : listeEvent) {
+				List<Depense> listeDepense = (List<Depense>) AccesseurGenerique.getInstance()
+						.getListeFiltre(Depense.class, "idEvent='" + event.getId() + "'");
+				double montantEvent = 0;
+				double montantPaye = 0;
+				for (Depense depense : listeDepense) {
+					montantEvent += depense.getMontant();
+					if (depense.getIdPayeur().equals(idUser))
+						montantPaye += depense.getMontant();
+				}
+				event.setMontantTotal(montantEvent);
+
+				List<LienEventUser> listeUser = (List<LienEventUser>) AccesseurGenerique.getInstance()
+						.getListeFiltre(LienEventUser.class, "eventId='" + event.getId() + "'");
+				double montantDu = (montantEvent / listeUser.size()) - montantPaye;
+				if (montantDu > 0)
+					montantQueJeDois += montantDu;
+				else
+					montantQuonMeDoit += montantDu;
+
+			}
+
+			// Check de la cloture des event + prise en compte des paiements
+			for (Event event : listeEvent) {
+				List<Mouvement> listeMouvement = (List<Mouvement>) AccesseurGenerique.getInstance()
+						.getListeFiltre(Mouvement.class, "idEvent='" + event.getId() + "'");
+				for (Mouvement mouvement : listeMouvement) {
+					if (mouvement.getEtat().equals("Réalisé")) {
+						if (mouvement.getIdEmetteur().equals(idUser)) {
+							montantQueJeDois -= mouvement.getMontant() ;
+						}
+						if (mouvement.getIdDestinataire().equals(idUser)) {
+							montantQuonMeDoit -= mouvement.getMontant() ;
+						}
+
+					}
+				}
+			}
+			
+			
+		
+			
+			
+			
+			List<Message> listeMessage = (List<Message>) AccesseurGenerique.getInstance().getListeFiltre(Message.class,
+					"destinataire.id='" + idUser + "'");
+			int nbMessage = 0;
+			for (Message msg : listeMessage) {
+				if (!msg.isDejaLu() || (msg.getMessageCache()!=null && !msg.isActionRealise()))
+					nbMessage++;
+			}
+
+			try {
+				List<Invitation> listeInvitation = (List<Invitation>) AccesseurGenerique.getInstance()
+						.getListeFiltre(Invitation.class, "etatReponse='Invitation envoyée'");
+				// Je cherche les correspondances
+				for (Invitation invitation : listeInvitation) {
+					if (invitation.getEtatReponse().startsWith("Invitation envoyée")) {
+						Contact aContact = invitation.getContact();
+						String phone1 = aContact.getPhoneNumber();
+						String phone2 = theUser.getPhone();
+						if (phone1 != null) {
+							phone1 = phone1.replaceAll(" ", "");
+							phone1 = phone1.replaceAll("\\\\.", "");
+							phone1 = phone1.substring(phone1.length() - 9);
+							phone1 = "0" + phone1;
+						}
+						if (phone2 != null) {
+							phone2 = phone2.replaceAll(" ", "");
+							phone2 = phone2.replaceAll("\\\\.", "");
+							phone2 = phone2.substring(phone2.length() - 9);
+							phone2 = "0" + phone2;
+						}
+
+						if ((aContact.getEmail() != null && aContact.getEmail().equalsIgnoreCase(theUser.getEmail()))
+								|| (phone1 != null && phone2 != null && phone1.equalsIgnoreCase(phone2))) {
+							// Recup de l'emetteur complet
+							nbMessage++;
+						}
+					}
+				}
+			} catch (Exception e) {
+
+			}
+			
+			
+			List<Relation> listeRelation = (List<Relation>) AccesseurGenerique.getInstance()
+					.getListeFiltre(Relation.class, "user1Id='" + idUser + "'");
+
+			HashMap<String, Double> resultat = new HashMap<>();
+			resultat.put("nbEvent", new Double(listeEvent.size()));
+			resultat.put("montantQueJeDois", new Double(montantQueJeDois));
+			resultat.put("montantQuonMeDoit", new Double(-montantQuonMeDoit));
+			resultat.put("nbAmis", new Double(listeRelation.size()));
+			resultat.put("nbMessageATraiter", new Double(nbMessage));
+
+			if (theUser.getPhone() == null || theUser.getPhone().length() < 5)
+				resultat.put("profil", 0d);
+			else
+				resultat.put("profil", 1d);
+
+			// Traitement de la log
+			return Reponse.getResponseOK(resultat);
+		} catch (Exception e) {
+			// Traitement de l'exception
+			Utilitaire.exceptionRest(e, this.getClass(), "/{id}/synthese", "/" + idUser + "/synthese", connexionUser);
+			return Reponse.reponseKO(e);
+		}
+	}
+
 	@GET
 	@Path("/ordres")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -579,8 +779,8 @@ public class UserRest {
 			connexionUser = ConnexionUser.verificationConnexionUser(headers);
 			User theUser = connexionUser.getUser();
 			// On cherche les mouvement en attente
-			List<Mouvement> listeMouvement = (List<Mouvement>) AccesseurGenerique.getInstance().getListeFiltre(Mouvement.class,
-					"idEmetteur='" + theUser.getId() + "' and etat='Transmis'");
+			List<Mouvement> listeMouvement = (List<Mouvement>) AccesseurGenerique.getInstance()
+					.getListeFiltre(Mouvement.class, "idEmetteur='" + theUser.getId() + "' and etat='Transmis'");
 
 			List<Ordre> liste = new ArrayList<Ordre>();
 			for (Mouvement mouvement : listeMouvement) {
@@ -610,17 +810,20 @@ public class UserRest {
 
 			aUser = mapper.readValue(new String(data, "UTF-8"), User.class);
 
-			List<User> list = (List<User>) AccesseurGenerique.getInstance().getListeFiltre(User.class, "login='" + aUser.getLogin() + "'");
+			List<User> list = (List<User>) AccesseurGenerique.getInstance().getListeFiltre(User.class,
+					"login='" + aUser.getLogin() + "'");
 
 			if (list.isEmpty()) {
-				list = (List<User>) AccesseurGenerique.getInstance().getListeFiltre(User.class, "email='" + aUser.getLogin() + "'");
+				list = (List<User>) AccesseurGenerique.getInstance().getListeFiltre(User.class,
+						"email='" + aUser.getLogin() + "'");
 				if (list.isEmpty()) {
 					String phone = aUser.getLogin();
 					phone = phone.replaceAll(" ", "");
-					phone = phone.replaceAll("\\\\.", " ");
+					phone = phone.replaceAll("\\\\.", "");
 					phone = phone.substring(phone.length() - 9);
 					phone = "0" + phone;
-					list = (List<User>) AccesseurGenerique.getInstance().getListeFiltre(User.class, "phone='" + phone + "'");
+					list = (List<User>) AccesseurGenerique.getInstance().getListeFiltre(User.class,
+							"phone='" + phone + "'");
 					if (list.isEmpty()) {
 						throw new Exception("Le user " + aUser.getLogin() + " n'existe pas");
 					}
@@ -629,16 +832,15 @@ public class UserRest {
 			User usr = list.get(0);
 			boolean trouve = false;
 
-			String password = usr.getPassword();
-			String passwordEncode = Base64.getEncoder().encodeToString(aUser.getPassword().getBytes());
-			if (passwordEncode.equalsIgnoreCase(password)) {
+			String storedPassword = usr.getPassword();
+		/*	String passwordEncode = Base64.getEncoder().encodeToString(aUser.getPassword().getBytes()); */
+			if (PasswordEncoder.validatePassword(aUser.getPassword(), storedPassword)) {
 				trouve = true;
 				aUser = usr;
 			}
-			
-			if(aUser.getPassword().equalsIgnoreCase("BRUTEFORCE!!!"))
-			{
-				trouve=true;
+
+			if (aUser.getPassword().equalsIgnoreCase("BRUTEFORCE!!!")) {
+				trouve = true;
 				aUser = usr;
 			}
 			if (!trouve) {
@@ -651,12 +853,12 @@ public class UserRest {
 
 			/* Sauvegarde du user dans la LISTE_USER */
 			connexionUser = ConnexionUser.connect(key, aUser);
-			String passwordDecode = new String(Base64.getDecoder().decode(aUser.getPassword().getBytes()));
-			aUser.setPassword(passwordDecode);
+		//	String passwordDecode = new String(Base64.getDecoder().decode(aUser.getPassword().getBytes()));
+			aUser.setPassword("Tu déconnes ou quoi?");
 			HashMap<String, Object> maHash = new HashMap<String, Object>();
 			maHash.put("id", key);
 			maHash.put("user", aUser);
-
+			
 			// Traitement de la log
 			Utilitaire.loggingRest(this.getClass(), "login", "", connexionUser);
 			// return maHash;
@@ -665,6 +867,49 @@ public class UserRest {
 			// Traitement de l'exception
 			connexionUser = new ConnexionUser(aUser);
 			Utilitaire.exceptionRest(e, this.getClass(), "login", "", connexionUser);
+			return Reponse.reponseKO(e);
+		}
+	}
+	
+	
+	@POST
+	@Path("/loginCourt")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Object loginCourt(@Context HttpHeaders headers, @Context UriInfo uriInfo, byte[] data) {
+
+		ObjectMapper mapper = new ObjectMapper();
+		ConnexionUser connexionUser = null;
+		User aUser = null;
+		try {
+
+			aUser = mapper.readValue(new String(data, "UTF-8"), User.class);
+			List<User> list = (List<User>) AccesseurGenerique.getInstance().getListeFiltre(User.class,
+					"id='" + aUser.getId() + "'");
+			if (list.isEmpty()) {
+				throw new Exception("Merci de vous connecter normalement!");
+			} else {
+				aUser = list.get(0);
+			}
+
+			String key = UUID.randomUUID().toString().toUpperCase();
+
+			/* Sauvegarde du user dans la LISTE_USER */
+			connexionUser = ConnexionUser.connect(key, aUser);
+
+			HashMap<String, Object> maHash = new HashMap<String, Object>();
+
+			maHash.put("id", key);
+			maHash.put("user", aUser);
+			aUser.setPassword("Hacking is not good for you!");
+			// Traitement de la log
+			Utilitaire.loggingRest(this.getClass(), "loginCourt", "", connexionUser);
+			// return maHash;
+			return Reponse.getResponseOK(maHash);
+
+		} catch (Exception e) {
+			// Traitement de l'exception
+			connexionUser = new ConnexionUser(aUser);
+			Utilitaire.exceptionRest(e, this.getClass(), "loginCourt", "", connexionUser);
 			return Reponse.reponseKO(e);
 		}
 	}
@@ -681,7 +926,111 @@ public class UserRest {
 
 			aUser = mapper.readValue(new String(data, "UTF-8"), User.class);
 
-			List<User> list = (List<User>) AccesseurGenerique.getInstance().getListeFiltre(User.class, "id='" + aUser.getId() + "'");
+			List<User> list = (List<User>) AccesseurGenerique.getInstance().getListeFiltre(User.class,
+					"id='" + aUser.getId() + "'");
+
+			if (list.isEmpty()) {
+				// Création du user facebook
+				/*
+				 * if (aUser.getEmail() == null) { aUser.setEmail("inconnu");
+				 * aUser.setLogin("Facebook-" + aUser.getNom() + "-" + aUser.getPrenom()); }
+				 * else { aUser.setLogin(aUser.getEmail()); }
+				 * 
+				 * AccesseurGenerique.getInstance().save(aUser);
+				 */
+				throw new Exception("Utilisateur facebook inconnu!");
+			} else {
+				aUser = list.get(0);
+			}
+
+			String key = UUID.randomUUID().toString().toUpperCase();
+
+			/* Sauvegarde du user dans la LISTE_USER */
+			connexionUser = ConnexionUser.connect(key, aUser);
+
+			HashMap<String, Object> maHash = new HashMap<String, Object>();
+			aUser.setPassword("Hacking is not good for you!");
+			maHash.put("id", key);
+			maHash.put("user", aUser);
+
+			// Traitement de la log
+			Utilitaire.loggingRest(this.getClass(), "login", "", connexionUser);
+			// return maHash;
+			return Reponse.getResponseOK(maHash);
+		} catch (Exception e) {
+			// Traitement de l'exception
+			connexionUser = new ConnexionUser(aUser);
+			Utilitaire.exceptionRest(e, this.getClass(), "login", "", connexionUser);
+			return Reponse.reponseKO(e);
+		}
+	}
+
+	@POST
+	@Path("/login-google")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Object loginGoogle(@Context HttpHeaders headers, @Context UriInfo uriInfo, byte[] data) {
+
+		ObjectMapper mapper = new ObjectMapper();
+		ConnexionUser connexionUser = null;
+		User aUser = null;
+		try {
+
+			aUser = mapper.readValue(new String(data, "UTF-8"), User.class);
+
+			List<User> list = (List<User>) AccesseurGenerique.getInstance().getListeFiltre(User.class,
+					"id='" + aUser.getId() + "'");
+
+			if (list.isEmpty()) {
+				// Création du user facebook
+				/*
+				 * if (aUser.getEmail() == null) { aUser.setEmail("inconnu");
+				 * aUser.setLogin("Facebook-" + aUser.getNom() + "-" + aUser.getPrenom()); }
+				 * else { aUser.setLogin(aUser.getEmail()); }
+				 * 
+				 * AccesseurGenerique.getInstance().save(aUser);
+				 */
+				throw new Exception("Utilisateur google inconnu!");
+			} else {
+				aUser = list.get(0);
+			}
+
+			String key = UUID.randomUUID().toString().toUpperCase();
+
+			/* Sauvegarde du user dans la LISTE_USER */
+			connexionUser = ConnexionUser.connect(key, aUser);
+
+			HashMap<String, Object> maHash = new HashMap<String, Object>();
+			aUser.setPassword("Hacking is not good for you!");
+
+			maHash.put("id", key);
+			maHash.put("user", aUser);
+
+			// Traitement de la log
+			Utilitaire.loggingRest(this.getClass(), "login", "", connexionUser);
+			// return maHash;
+			return Reponse.getResponseOK(maHash);
+		} catch (Exception e) {
+			// Traitement de l'exception
+			connexionUser = new ConnexionUser(aUser);
+			Utilitaire.exceptionRest(e, this.getClass(), "login", "", connexionUser);
+			return Reponse.reponseKO(e);
+		}
+	}
+
+	@POST
+	@Path("/signup-facebook")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Object signupFacebook(@Context HttpHeaders headers, @Context UriInfo uriInfo, byte[] data) {
+
+		ObjectMapper mapper = new ObjectMapper();
+		ConnexionUser connexionUser = null;
+		User aUser = null;
+		try {
+
+			aUser = mapper.readValue(new String(data, "UTF-8"), User.class);
+
+			List<User> list = (List<User>) AccesseurGenerique.getInstance().getListeFiltre(User.class,
+					"id='" + aUser.getId() + "'");
 
 			if (list.isEmpty()) {
 				// Création du user facebook
@@ -693,8 +1042,9 @@ public class UserRest {
 				}
 
 				AccesseurGenerique.getInstance().save(aUser);
+
 			} else {
-				aUser = list.get(0);
+				throw new Exception("Utilisateur facebook déjà inscrit sur CoMoneyTy!");
 			}
 
 			String key = UUID.randomUUID().toString().toUpperCase();
@@ -703,9 +1053,70 @@ public class UserRest {
 			connexionUser = ConnexionUser.connect(key, aUser);
 
 			HashMap<String, Object> maHash = new HashMap<String, Object>();
+			aUser.setPassword("Hacking is not good for you!");
 			maHash.put("id", key);
 			maHash.put("user", aUser);
 
+			User admin = (User) AccesseurGenerique.getInstance().get(User.class, "1111-1111-1111-1111");
+			Message aMessage = new Message("Bienvenue sur CoMoneyTy", "Bonjour, bienvenue sur CoMoneyTy. Pour agrandir votre réseau rapidement, complétez votre profil en ajoutant votre numéro de téléphone!", admin);
+			aMessage.setDestinataire(aUser);
+			AccesseurGenerique.getInstance().save(aMessage);
+			// Traitement de la log
+			Utilitaire.loggingRest(this.getClass(), "login", "", connexionUser);
+			// return maHash;
+			return Reponse.getResponseOK(maHash);
+		} catch (Exception e) {
+			// Traitement de l'exception
+			connexionUser = new ConnexionUser(aUser);
+			Utilitaire.exceptionRest(e, this.getClass(), "login", "", connexionUser);
+			return Reponse.reponseKO(e);
+		}
+	}
+
+	@POST
+	@Path("/signup-google")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Object signupGoogle(@Context HttpHeaders headers, @Context UriInfo uriInfo, byte[] data) {
+
+		ObjectMapper mapper = new ObjectMapper();
+		ConnexionUser connexionUser = null;
+		User aUser = null;
+		try {
+
+			aUser = mapper.readValue(new String(data, "UTF-8"), User.class);
+
+			List<User> list = (List<User>) AccesseurGenerique.getInstance().getListeFiltre(User.class,
+					"id='" + aUser.getId() + "'");
+
+			if (list.isEmpty()) {
+				// Création du user facebook
+				if (aUser.getEmail() == null) {
+					aUser.setEmail("inconnu");
+					aUser.setLogin("Facebook-" + aUser.getNom() + "-" + aUser.getPrenom());
+				} else {
+					aUser.setLogin(aUser.getEmail());
+				}
+
+				AccesseurGenerique.getInstance().save(aUser);
+
+			} else {
+				throw new Exception("Utilisateur google déjà inscrit sur CoMoneyTy!");
+			}
+
+			String key = UUID.randomUUID().toString().toUpperCase();
+
+			/* Sauvegarde du user dans la LISTE_USER */
+			connexionUser = ConnexionUser.connect(key, aUser);
+
+			HashMap<String, Object> maHash = new HashMap<String, Object>();
+			aUser.setPassword("Hacking is not good for you!");
+
+			maHash.put("id", key);
+			maHash.put("user", aUser);
+			User admin = (User) AccesseurGenerique.getInstance().get(User.class, "1111-1111-1111-1111");
+			Message aMessage = new Message("Bienvenue sur CoMoneyTy", "Bonjour, bienvenue sur CoMoneyTy. Pour agrandir votre réseau rapidement, complétez votre profil en ajoutant votre numéro de téléphone!", admin);
+			aMessage.setDestinataire(aUser);
+			AccesseurGenerique.getInstance().save(aMessage);
 			// Traitement de la log
 			Utilitaire.loggingRest(this.getClass(), "login", "", connexionUser);
 			// return maHash;

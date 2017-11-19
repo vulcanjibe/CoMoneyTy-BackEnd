@@ -145,6 +145,13 @@ public class InvitationRest {
             Invitation aInvitation= mapper.readValue(new String(data, "UTF-8"), Invitation.class);
             if(aInvitation.getDate()==null)
             	aInvitation.setDate(new Date());
+            String phone = aInvitation.getContact().getPhoneNumber(); 
+			phone = phone.replaceAll(" ", "");
+			phone = phone.replaceAll("\\\\.", "");
+			phone = phone.substring(phone.length() - 9);
+			phone = "0" + phone;
+            aInvitation.getContact().setPhoneNumber(phone);
+            	
            	AccesseurGenerique.getInstance().save(aInvitation);
             
            	// J'envoie un message d'invitation => Non car je connais pas son id!
