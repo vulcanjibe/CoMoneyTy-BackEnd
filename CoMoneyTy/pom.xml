@@ -5,8 +5,6 @@
 	<artifactId>CoMoneyTy</artifactId>
 	<packaging>war</packaging>
 	<dependencies>
-
-
 		<dependency>
 			<groupId>com.couchbase.client</groupId>
 			<artifactId>java-client</artifactId>
@@ -41,26 +39,31 @@
  		<dependency>
             <groupId>org.glassfish.jersey.containers</groupId>
             <artifactId>jersey-container-servlet</artifactId>
-            <version>2.26-b03</version>
+            <version>2.26</version>
         </dependency>
         <dependency>
             <groupId>org.glassfish.jersey.core</groupId>
             <artifactId>jersey-server</artifactId>
-            <version>2.26-b03</version>
+            <version>2.26</version>
         </dependency>
         <dependency>
             <groupId>org.glassfish.jersey.core</groupId>
             <artifactId>jersey-client</artifactId>
-            <version>2.26-b03</version>
+            <version>2.26</version>
         </dependency>
         <dependency>
         	<groupId>org.glassfish.jersey.media</groupId>
         	<artifactId>jersey-media-multipart</artifactId>
-        	<version>2.26-b03</version>
+        	<version>2.26</version>
     	</dependency>
+    	<dependency>
+    		<groupId>org.glassfish.jersey.inject</groupId>
+	    	<artifactId>jersey-hk2</artifactId>
+    		<version>2.26</version>
+		</dependency>
 
 	</dependencies>
-	<build>
+	<build> 
 		<sourceDirectory>src</sourceDirectory>
 
 

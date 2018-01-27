@@ -4,9 +4,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.nio.file.StandardCopyOption;
-import java.sql.Date;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 
@@ -29,7 +27,6 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 
-import mybank.server.beans.LienEventUser;
 import mybank.server.beans.Depense;
 import mybank.server.beans.HistoriqueEvent;
 import mybank.server.beans.User;
@@ -38,8 +35,9 @@ import mybank.server.rest.util.ConnexionUser;
 import mybank.server.rest.util.Reponse;
 import mybank.server.rest.util.Utilitaire;
 import mybank.server.rest.util.json.DateDeserializer;
-@Path("/depense")
+@Path("/depense")	
 public class DepenseRest {
+
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)

@@ -31,8 +31,10 @@ import mybank.server.beans.GenerateurTest;
 import mybank.server.beans.LienEventUser;
 import mybank.server.beans.Mouvement;
 import mybank.server.beans.User;
+import mybank.server.rest.util.Accesseur;
 import mybank.server.rest.util.AccesseurGenerique;
 import mybank.server.rest.util.ConnexionUser;
+import mybank.server.rest.util.Index;
 import mybank.server.rest.util.Reponse;
 import mybank.server.rest.util.Utilitaire;
 @Path("/utilitaire")
@@ -246,7 +248,59 @@ public class UtilitaireRest {
             return Reponse.reponseKO(e);
         }
     }
-   
+    @GET
+    @Path("/indexManquant")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getIndexManquant(@Context HttpHeaders headers, @Context UriInfo uriInfo) {
+        ConnexionUser connexionUser = null;
+        try {
+            // Vérification de l'accès depuis un depense connecté
+             return Reponse.getResponseOK(Accesseur.INDEXES);
+        } catch (Exception e) {
+            // Traitement de l'exception
+            Utilitaire.exceptionRest(e, this.getClass(), "getIndexManquant", "", connexionUser);
+            return Reponse.reponseKO(e);
+        }
+    }
+    @GET
+    @Path("/rechercheIndexManquant")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getEtatIndexManquant(@Context HttpHeaders headers, @Context UriInfo uriInfo) {
+        ConnexionUser connexionUser = null;
+        try {
+            // Vérification de l'accès depuis un depense connecté
+        	String rep = "ON";
+        	if(! Accesseur.RECUPERATION_INDEX) 
+        		rep="OFF";
+             return Reponse.getResponseOK(rep);
+        } catch (Exception e) {
+            // Traitement de l'exception
+            Utilitaire.exceptionRest(e, this.getClass(), "getIndexManquant", "", connexionUser);
+            return Reponse.reponseKO(e);
+        }
+    }
+    @GET
+    @Path("/toggleRechercheIndexManquant")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response toggleRechercheIndexManquant(@Context HttpHeaders headers, @Context UriInfo uriInfo) {
+        ConnexionUser connexionUser = null;
+        try {
+            // Vérification de l'accès depuis un depense connecté
+        	Accesseur.RECUPERATION_INDEX = ! Accesseur.RECUPERATION_INDEX;
+        	String rep = "ON";
+        	if(! Accesseur.RECUPERATION_INDEX) {
+        		rep="OFF";
+        		Accesseur.INDEXES=new HashMap<String,ArrayList<Index>>();
+        	}
+             return Reponse.getResponseOK(rep);
+        } catch (Exception e) {
+            // Traitement de l'exception
+            Utilitaire.exceptionRest(e, this.getClass(), "getIndexManquant", "", connexionUser);
+            return Reponse.reponseKO(e);
+        }
+    }
+
+    
     @POST
     @Path("upload")
     @Consumes(MediaType.MULTIPART_FORM_DATA)

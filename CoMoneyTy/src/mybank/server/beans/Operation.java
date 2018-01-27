@@ -1,5 +1,6 @@
 package mybank.server.beans;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.UUID;
 
@@ -17,6 +18,8 @@ public class Operation implements ObjetId {
 	String ibanDestinataire;
 	TypeOperation typeOperation;
 	String urlPhotoDestinataire;
+	boolean presenceDocument;
+	
 	public String getId() {
 		return id;
 	}
@@ -96,6 +99,13 @@ public class Operation implements ObjetId {
 	public void setUrlPhotoDestinataire(String urlPhotoDestinataire) {
 		this.urlPhotoDestinataire = urlPhotoDestinataire;
 	}
+	public boolean isPresenceDocument() {
+		return presenceDocument;
+	}
+	public void setPresenceDocument(boolean presenceDocument) {
+		this.presenceDocument = presenceDocument;
+	}
+
 	
 	
 }

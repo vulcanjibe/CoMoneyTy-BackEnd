@@ -3,6 +3,7 @@ package mybank.server.rest.util;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.TreeSet;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -29,8 +30,8 @@ public class Accesseur extends AccesseurGenerique {
 	private static final PersistTo PERSISTO = PersistTo.NONE;
 	public static Bucket BUCKET = null;
 	public final static String BUCKET_NAME = "comoneyty";
-	
-	
+	public static HashMap<String,ArrayList<Index>> INDEXES = new HashMap<>();
+	public static boolean RECUPERATION_INDEX = false;
 	public  void deleteAll(Class aClass)
 	{
 		N1qlQuery query = N1qlQuery.simple("delete from `"+BUCKET_NAME+"` where nomClasse='"+aClass.getSimpleName()+"'",params);
@@ -76,6 +77,15 @@ public class Accesseur extends AccesseurGenerique {
 		Cluster cluster = CouchbaseCluster.create(env,"couchbase.home");
 		cluster.authenticate("comoneyty", "robbynaish");
 		BUCKET = cluster.openBucket(BUCKET_NAME,30,TimeUnit.SECONDS);
+		
+		N1qlQuery query = N1qlQuery.simple("select * from system:indexes");
+		N1qlQueryResult result = BUCKET.query(query);
+		List<N1qlQueryRow> list = result.allRows();
+		for(N1qlQueryRow row : list)
+		{
+			JsonObject ind = row.value().getObject("indexes");
+			System.out.println("INDEX : "+ind.get("name")+" : "+ind.get("index_key")+" ON "+ind.get("condition"));
+		}
 		//REPOSITORY = BUCKET.repository();
 	}
 	public  void save(ObjetId obj) throws Exception
@@ -117,7 +127,6 @@ public class Accesseur extends AccesseurGenerique {
 	private  N1qlParams params = N1qlParams.build().consistency(ScanConsistency.REQUEST_PLUS);
 	public   ArrayList getListe(Class aClass) throws Exception
 	{
-		
 		N1qlQuery query = N1qlQuery.simple("select * from `"+BUCKET_NAME+"` where nomClasse='"+aClass.getSimpleName()+"'",params);
 		N1qlQueryResult result = BUCKET.query(query);
 		List<N1qlQueryRow> list = result.allRows();
@@ -137,7 +146,41 @@ public class Accesseur extends AccesseurGenerique {
 	{
 		String requete = "select * from `"+BUCKET_NAME+"` where nomClasse='"+aClass.getSimpleName()+"'";
 		requete+=" and "+filtre;
-		
+		/* Traitement pour détecter les indexs manquants */
+		if(RECUPERATION_INDEX) {
+			String in = aClass.getSimpleName();
+			TreeSet<String> listeOut = new TreeSet<>();
+			String tab[] = filtre.split("=");
+			int cpt=0;
+			for(String s : tab) {
+				if(cpt%2==0) {
+					s=s.trim();
+					if(s.contains(" ")) {
+						String val = s.substring(s.indexOf(" ")+1);
+						listeOut.add(val);
+					} else listeOut.add(s);
+				}
+				cpt++;
+			}
+			String out="";
+			for(String s: listeOut)
+			{
+				out+=s+";";
+			}
+			if(INDEXES.get(in)==null) {
+				INDEXES.put(in, new ArrayList<>());
+			}
+			ArrayList<Index> listeIndex = INDEXES.get(in);
+			Index index = new Index();
+			index.setChaine(out.toLowerCase());
+			index.setNombreAppel(1);
+			if(!listeIndex.contains(index)) {
+				listeIndex.add(index);
+			} else {
+				int idx = listeIndex.indexOf(index);
+				listeIndex.get(idx).addAppel();
+			}
+		}
 		N1qlQuery query = N1qlQuery.simple(requete,params);
 		N1qlQueryResult result = BUCKET.query(query);
 		List<N1qlQueryRow> list = result.allRows();

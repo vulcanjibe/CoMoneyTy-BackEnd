@@ -18,7 +18,7 @@ public class CorsFilter implements Filter {
     	System.out.println("Init CorsFilter");
     }
 
-
+ 
 
     @Override
     public void destroy() {

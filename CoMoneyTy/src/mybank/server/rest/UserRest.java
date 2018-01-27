@@ -1,6 +1,8 @@
 package mybank.server.rest;
 
+import java.io.BufferedReader;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -28,6 +30,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import mybank.server.beans.Contact;
 import mybank.server.beans.Depense;
 import mybank.server.beans.Event;
+import mybank.server.beans.GenerateurTest;
 import mybank.server.beans.Invitation;
 import mybank.server.beans.LienEventUser;
 import mybank.server.beans.Message;
@@ -39,8 +42,11 @@ import mybank.server.beans.javascript.OperationAvecDepense;
 import mybank.server.beans.javascript.Ordre;
 import mybank.server.beans.javascript.TableauMessage;
 import mybank.server.beans.javascript.TableauOperation;
+import mybank.server.beans.javascript.UserAvecDepense;
+import mybank.server.beans.type.TypeOperation;
 import mybank.server.rest.util.AccesseurGenerique;
 import mybank.server.rest.util.ConnexionUser;
+import mybank.server.rest.util.InitServlet;
 import mybank.server.rest.util.PasswordEncoder;
 import mybank.server.rest.util.Reponse;
 import mybank.server.rest.util.Utilitaire;
@@ -156,24 +162,16 @@ public class UserRest {
 				aUser.setUrlAvatar("user/standard.png");
 			if (aUser.getLogin() == null)
 				aUser.setLogin(aUser.getEmail());
-			
+
 			String passwordHash = PasswordEncoder.GenerePasswordHash(aUser.getPassword());
 			aUser.setPassword(passwordHash);
 			AccesseurGenerique.getInstance().save(aUser);
-			String key = UUID.randomUUID().toString().toUpperCase();
-			connexionUser = ConnexionUser.connect(key, aUser);
-			
-			aUser.setPassword("Faut Pas déconner!!!");
 
-			HashMap<String, Object> maHash = new HashMap<String, Object>();
-			maHash.put("id", key);
-			maHash.put("user", aUser);
-			User admin = (User) AccesseurGenerique.getInstance().get(User.class, "1111-1111-1111-1111");
-			Message aMessage = new Message("Bienvenue sur CoMoneyTy", "Bonjour, bienvenue sur CoMoneyTy. Pour agrandir votre réseau rapidement, complétez votre profil en ajoutant votre numéro de téléphone!", admin);
-			aMessage.setDestinataire(aUser);
-			AccesseurGenerique.getInstance().save(aMessage);
+			HashMap<String, Object> maHash = doSignup(aUser);
 			// Traitement de la log
-			Utilitaire.loggingRest(this.getClass(), "save", data, connexionUser);
+
+			Utilitaire.loggingRest(this.getClass(), "signup", aUser.getNom(), new ConnexionUser(aUser));
+
 			return Reponse.getResponseOK(maHash);
 		} catch (Exception e) {
 			// Traitement de l'exception
@@ -199,19 +197,18 @@ public class UserRest {
 			phone = phone.substring(phone.length() - 9);
 			phone = "0" + phone;
 			aUser.setPhone(phone);
-			
-			if(aUser.getPassword()==null || aUser.getPassword().length()==0 || aUser.getPassword().equalsIgnoreCase("--Unchanged--"))
-			{
+
+			if (aUser.getPassword() == null || aUser.getPassword().length() == 0
+					|| aUser.getPassword().equalsIgnoreCase("--Unchanged--")) {
 				// recup du password!
-				User userReel = (User)AccesseurGenerique.getInstance().get(User.class, aUser.getId());
-				aUser.setPassword(userReel.getPassword());				
-			} else
-			{
+				User userReel = (User) AccesseurGenerique.getInstance().get(User.class, aUser.getId());
+				aUser.setPassword(userReel.getPassword());
+			} else {
 				// New password
 				String passwordEncode = PasswordEncoder.GenerePasswordHash(aUser.getPassword());
 				aUser.setPassword(passwordEncode);
 			}
-			
+
 			String urlAvatar = aUser.getUrlAvatar();
 			if (urlAvatar != null && urlAvatar.length() > 50) {
 				if (urlAvatar.contains("==")) {
@@ -229,7 +226,7 @@ public class UserRest {
 				}
 			}
 
-		//	aUser.setPassword(connexionUser.getUser().getPassword());
+			// aUser.setPassword(connexionUser.getUser().getPassword());
 			AccesseurGenerique.getInstance().update(aUser);
 
 			// Traitement de la log
@@ -468,6 +465,101 @@ public class UserRest {
 			return Reponse.reponseKO(e);
 		}
 	}
+	@GET
+	@Path("/{id}/relationsAvecMontant")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getRelationAvecMontantDeUserId(@Context HttpHeaders headers, @Context UriInfo uriInfo,
+			@PathParam("id") String idUser) {
+		ConnexionUser connexionUser = null;
+		try {
+			// VÃ©rification de l'accÃ¨s depuis un user connectÃ©
+			connexionUser = ConnexionUser.verificationConnexionUser(headers);
+
+			// On cherche les liens EventUset
+			List<Relation> liste = (List<Relation>) AccesseurGenerique.getInstance().getListeFiltre(Relation.class,
+					"user1Id='" + idUser + "'");
+			ArrayList<UserAvecDepense> listeRelation = new ArrayList<>();
+			// RecupÃ©ration des Event
+			for (Relation lien : liste) {
+				listeRelation.add(new UserAvecDepense((User) AccesseurGenerique.getInstance().get(User.class, lien.getUser2Id())));
+			}
+			
+			// Pour chaque relation, je cherche les mvts en attnte
+			for(UserAvecDepense ami : listeRelation) {
+				List<Mouvement> listeMouvementDu = (List<Mouvement>) AccesseurGenerique.getInstance()
+						.getListeFiltre(Mouvement.class, "idEmetteur='" + idUser + "' and idDestinataire='"+ami.getUser().getId()+"' and etat='Transmis'");
+				List<Mouvement> listeMouvementARecuperer = (List<Mouvement>) AccesseurGenerique.getInstance()
+						.getListeFiltre(Mouvement.class, "idEmetteur='" + ami.getUser().getId() + "' and idDestinataire='"+idUser+"' and etat='Transmis'");
+				double montantDu=0;
+				double montantARecupere=0;
+				for(Mouvement mvt : listeMouvementDu)
+					montantDu+=mvt.getMontant();
+				for(Mouvement mvt : listeMouvementARecuperer)
+					montantARecupere+=mvt.getMontant();
+				ami.setaPaye(montantDu);
+				ami.setDoit(montantARecupere);
+			}
+			// Traitement de la log
+			return Reponse.getResponseOK(listeRelation);
+		} catch (Exception e) {
+			// Traitement de l'exception
+			Utilitaire.exceptionRest(e, this.getClass(), "/{id}/events", "/" + idUser + "/events", connexionUser);
+			return Reponse.reponseKO(e);
+		}
+	}
+	@GET
+	@Path("/{id}/detailAmi/{idAmi}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getRelationAvecMontantDeUserId(@Context HttpHeaders headers, @Context UriInfo uriInfo,
+			@PathParam("id") String idUser,@PathParam("idAmi") String idAmi) {
+		ConnexionUser connexionUser = null;
+		try {
+			// VÃ©rification de l'accÃ¨s depuis un user connectÃ©
+			connexionUser = ConnexionUser.verificationConnexionUser(headers);
+
+			User moi = connexionUser.getUser();
+			User ami =  (User) AccesseurGenerique.getInstance().get(User.class, idAmi);
+			// On cherche les event en commun
+			
+			List<LienEventUser> liste = (List<LienEventUser>) AccesseurGenerique.getInstance()
+					.getListeFiltre(LienEventUser.class, "userId='" + idUser + "'");
+			ArrayList<Event> listeEvent = new ArrayList<>();
+			// RecupÃ©ration des Event
+			for (LienEventUser lien : liste) {
+				List<LienEventUser> liste2 = (List<LienEventUser>) AccesseurGenerique.getInstance()
+						.getListeFiltre(LienEventUser.class, "userId='" + idAmi + "' and eventId='"+lien.getEventId()+"'");
+				if(!liste2.isEmpty()) {
+					Event event = (Event) AccesseurGenerique.getInstance().get(Event.class, lien.getEventId());
+					listeEvent.add(event);
+				}
+			}
+		
+			for(Event event : listeEvent) {
+				double montantDu=0;
+				double montantARecupere=0;
+				List<Mouvement> listeMouvement = (List<Mouvement>) AccesseurGenerique.getInstance()
+						.getListeFiltre(Mouvement.class, "idEvent='" + event.getId() + "' and etat='Transmis'");
+				for(Mouvement mouvement : listeMouvement) {
+					if(mouvement.getIdEmetteur().equals(idUser) && mouvement.getIdDestinataire().equals(idAmi))
+						montantDu+=mouvement.getMontant();
+					if(mouvement.getIdDestinataire().equals(idUser) && mouvement.getIdEmetteur().equals(idAmi))
+						montantARecupere+=mouvement.getMontant();
+				}
+				event.setMontantDu(montantDu);
+				event.setMontantDepense(montantARecupere);
+			}
+		
+			HashMap<String,ArrayList> maHash = new HashMap<>();
+			maHash.put("Event", listeEvent);
+			// Pour chaque relation, je cherche les mvts en attnte
+			// Traitement de la log
+			return Reponse.getResponseOK(maHash);
+		} catch (Exception e) {
+			// Traitement de l'exception
+			Utilitaire.exceptionRest(e, this.getClass(), "/{id}/detailAmi/{idAmi}", "/" + idUser + "/detailAmi/"+idAmi, connexionUser);
+			return Reponse.reponseKO(e);
+		}
+	}
 
 	@GET
 	@Path("/{id}/invitations")
@@ -585,11 +677,10 @@ public class UserRest {
 					"destinataire.id='" + idUser + "'");
 			int nbMessageNonLu = 0;
 			for (Message msg : listeMessage) {
-				if (!msg.isDejaLu() || (msg.getMessageCache()!=null && !msg.isActionRealise()))
+				if (!msg.isDejaLu() || (msg.getMessageCache() != null && !msg.isActionRealise()))
 					nbMessageNonLu++;
 			}
 
-		
 			try {
 				List<Invitation> listeInvitation = (List<Invitation>) AccesseurGenerique.getInstance()
 						.getListeFiltre(Invitation.class, "etatReponse='Invitation envoyée'");
@@ -688,26 +779,21 @@ public class UserRest {
 				for (Mouvement mouvement : listeMouvement) {
 					if (mouvement.getEtat().equals("Réalisé")) {
 						if (mouvement.getIdEmetteur().equals(idUser)) {
-							montantQueJeDois -= mouvement.getMontant() ;
+							montantQueJeDois -= mouvement.getMontant();
 						}
 						if (mouvement.getIdDestinataire().equals(idUser)) {
-							montantQuonMeDoit -= mouvement.getMontant() ;
+							montantQuonMeDoit -= mouvement.getMontant();
 						}
 
 					}
 				}
 			}
-			
-			
-		
-			
-			
-			
+
 			List<Message> listeMessage = (List<Message>) AccesseurGenerique.getInstance().getListeFiltre(Message.class,
 					"destinataire.id='" + idUser + "'");
 			int nbMessage = 0;
 			for (Message msg : listeMessage) {
-				if (!msg.isDejaLu() || (msg.getMessageCache()!=null && !msg.isActionRealise()))
+				if (!msg.isDejaLu() || (msg.getMessageCache() != null && !msg.isActionRealise()))
 					nbMessage++;
 			}
 
@@ -743,8 +829,7 @@ public class UserRest {
 			} catch (Exception e) {
 
 			}
-			
-			
+
 			List<Relation> listeRelation = (List<Relation>) AccesseurGenerique.getInstance()
 					.getListeFiltre(Relation.class, "user1Id='" + idUser + "'");
 
@@ -833,8 +918,11 @@ public class UserRest {
 			boolean trouve = false;
 
 			String storedPassword = usr.getPassword();
-		/*	String passwordEncode = Base64.getEncoder().encodeToString(aUser.getPassword().getBytes()); */
-			if (PasswordEncoder.validatePassword(aUser.getPassword(), storedPassword)) {
+			/*
+			 * String passwordEncode =
+			 * Base64.getEncoder().encodeToString(aUser.getPassword().getBytes());
+			 */
+			if (storedPassword != null && PasswordEncoder.validatePassword(aUser.getPassword(), storedPassword)) {
 				trouve = true;
 				aUser = usr;
 			}
@@ -853,12 +941,13 @@ public class UserRest {
 
 			/* Sauvegarde du user dans la LISTE_USER */
 			connexionUser = ConnexionUser.connect(key, aUser);
-		//	String passwordDecode = new String(Base64.getDecoder().decode(aUser.getPassword().getBytes()));
+			// String passwordDecode = new
+			// String(Base64.getDecoder().decode(aUser.getPassword().getBytes()));
 			aUser.setPassword("Tu déconnes ou quoi?");
 			HashMap<String, Object> maHash = new HashMap<String, Object>();
 			maHash.put("id", key);
 			maHash.put("user", aUser);
-			
+
 			// Traitement de la log
 			Utilitaire.loggingRest(this.getClass(), "login", "", connexionUser);
 			// return maHash;
@@ -870,8 +959,7 @@ public class UserRest {
 			return Reponse.reponseKO(e);
 		}
 	}
-	
-	
+
 	@POST
 	@Path("/loginCourt")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -1047,22 +1135,10 @@ public class UserRest {
 				throw new Exception("Utilisateur facebook déjà inscrit sur CoMoneyTy!");
 			}
 
-			String key = UUID.randomUUID().toString().toUpperCase();
-
-			/* Sauvegarde du user dans la LISTE_USER */
-			connexionUser = ConnexionUser.connect(key, aUser);
-
-			HashMap<String, Object> maHash = new HashMap<String, Object>();
-			aUser.setPassword("Hacking is not good for you!");
-			maHash.put("id", key);
-			maHash.put("user", aUser);
-
-			User admin = (User) AccesseurGenerique.getInstance().get(User.class, "1111-1111-1111-1111");
-			Message aMessage = new Message("Bienvenue sur CoMoneyTy", "Bonjour, bienvenue sur CoMoneyTy. Pour agrandir votre réseau rapidement, complétez votre profil en ajoutant votre numéro de téléphone!", admin);
-			aMessage.setDestinataire(aUser);
-			AccesseurGenerique.getInstance().save(aMessage);
+			HashMap<String, Object> maHash = doSignup(aUser);
 			// Traitement de la log
-			Utilitaire.loggingRest(this.getClass(), "login", "", connexionUser);
+
+			Utilitaire.loggingRest(this.getClass(), "signup", aUser.getNom(), new ConnexionUser(aUser));
 			// return maHash;
 			return Reponse.getResponseOK(maHash);
 		} catch (Exception e) {
@@ -1070,6 +1146,119 @@ public class UserRest {
 			connexionUser = new ConnexionUser(aUser);
 			Utilitaire.exceptionRest(e, this.getClass(), "login", "", connexionUser);
 			return Reponse.reponseKO(e);
+		}
+	}
+
+	private HashMap<String, Object> doSignup(User aUser) throws Exception {
+		String key = UUID.randomUUID().toString().toUpperCase();
+
+		/* Sauvegarde du user dans la LISTE_USER */
+		ConnexionUser connexionUser = ConnexionUser.connect(key, aUser);
+
+		HashMap<String, Object> maHash = new HashMap<String, Object>();
+		aUser.setPassword("Hacking is not good for you!");
+		maHash.put("id", key);
+		maHash.put("user", aUser);
+
+		User admin = (User) AccesseurGenerique.getInstance().get(User.class, "1111-1111-1111-1111");
+		Message aMessage = new Message("Bienvenue sur CoMoneyTy",
+				"Bonjour, bienvenue sur CoMoneyTy. Pour agrandir votre réseau rapidement, complétez votre profil en ajoutant votre numéro de téléphone!",
+				admin);
+		aMessage.setDestinataire(aUser);
+		AccesseurGenerique.getInstance().save(aMessage);
+
+		// Création des mouvements fictifs
+
+		Thread aThread = new Thread(new Runnable() {
+
+			@Override
+			public void run() {
+				try {
+					generationOperationFictive(aUser);
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		});
+		
+		aThread.start();
+
+		return maHash;
+	}
+
+	private void generationOperationFictive(User aUser) throws Exception {
+		ArrayList<User> listeUser = (ArrayList<User>) AccesseurGenerique.getInstance().getListe(User.class);
+
+		int nbMouvement = new Double(Math.random() * 100).intValue();
+		while (nbMouvement < 50)
+			nbMouvement = new Double(Math.random() * 100).intValue();
+
+		for (int i = 0; i < nbMouvement; i++) {
+			Operation ope1 = (Operation) GenerateurTest.donneHasard(InitServlet.listeOperationReference);
+			Operation ope = new Operation();
+			ope.setDate(ope1.getDate());
+			ope.setDescription(ope1.getDescription());
+			ope.setMontant(ope1.getMontant() * Math.random());
+			ope.setUserId(aUser.getId());
+			ope.setIbanEmetteur(GenerateurTest.donneIBAN());
+			ope.setIbanDestinataire(GenerateurTest.donneIBAN());
+			TypeOperation type = new TypeOperation(1, "Virement");
+			double test = Math.random();
+			if (ope.getMontant() < 0) {
+				if (test > 0.8) {
+					type = new TypeOperation(2, "Prélèvement");
+
+				} else if (test > 0.7) {
+					type = new TypeOperation(3, "Règlement CB");
+
+				} else if (test > 0.4) {
+					type = new TypeOperation(3, "Chèque");
+
+				} else {
+					// virement
+					if (Math.random() > 0.7) {
+						User userEmetteur = (User) GenerateurTest.donneHasard(listeUser, aUser.getId());
+						ope.setIbanEmetteur(userEmetteur.getIban());
+					}
+				}
+			} else {
+				if (test > 0.8) {
+					type = new TypeOperation(2, "Prélèvement");
+				} else if (test > 0.4) {
+					type = new TypeOperation(3, "Depot Chèque");
+				} else {
+					// virement
+					if (Math.random() > 0.7) {
+						User userEmetteur = (User) GenerateurTest.donneHasard(listeUser, aUser.getId());
+						ope.setIbanEmetteur(userEmetteur.getIban());
+					}
+				}
+
+			}
+
+			ope.setTypeOperation(type);
+			AccesseurGenerique.getInstance().save(ope);
+		}
+
+		nbMouvement = new Double(Math.random() * 15).intValue();
+		while (nbMouvement < 8)
+			nbMouvement = new Double(Math.random() * 15).intValue();
+
+		for (int i = 0; i < nbMouvement; i++) {
+			Operation ope = new Operation(aUser.getId(), GenerateurTest.donneDate(),
+					"Virement reçu - Ref"
+							+ GenerateurTest.completePar0(new Double(Math.random() * 1000).intValue() + "", 4),
+					new Double(Math.random() * 1500).doubleValue() / 10);
+			ope.setIbanEmetteur(GenerateurTest.donneIBAN());
+			ope.setIbanDestinataire(GenerateurTest.donneIBAN());
+			TypeOperation type = new TypeOperation(1, "Virement");
+			if (Math.random() > 0.7) {
+				User userEmetteur = (User) GenerateurTest.donneHasard(listeUser, aUser.getId());
+				ope.setIbanEmetteur(userEmetteur.getIban());
+			}
+			ope.setTypeOperation(type);
+			AccesseurGenerique.getInstance().save(ope);
 		}
 	}
 
@@ -1103,22 +1292,11 @@ public class UserRest {
 				throw new Exception("Utilisateur google déjà inscrit sur CoMoneyTy!");
 			}
 
-			String key = UUID.randomUUID().toString().toUpperCase();
-
-			/* Sauvegarde du user dans la LISTE_USER */
-			connexionUser = ConnexionUser.connect(key, aUser);
-
-			HashMap<String, Object> maHash = new HashMap<String, Object>();
-			aUser.setPassword("Hacking is not good for you!");
-
-			maHash.put("id", key);
-			maHash.put("user", aUser);
-			User admin = (User) AccesseurGenerique.getInstance().get(User.class, "1111-1111-1111-1111");
-			Message aMessage = new Message("Bienvenue sur CoMoneyTy", "Bonjour, bienvenue sur CoMoneyTy. Pour agrandir votre réseau rapidement, complétez votre profil en ajoutant votre numéro de téléphone!", admin);
-			aMessage.setDestinataire(aUser);
-			AccesseurGenerique.getInstance().save(aMessage);
+			HashMap<String, Object> maHash = doSignup(aUser);
 			// Traitement de la log
-			Utilitaire.loggingRest(this.getClass(), "login", "", connexionUser);
+
+			Utilitaire.loggingRest(this.getClass(), "signup", aUser.getNom(), new ConnexionUser(aUser));
+
 			// return maHash;
 			return Reponse.getResponseOK(maHash);
 		} catch (Exception e) {

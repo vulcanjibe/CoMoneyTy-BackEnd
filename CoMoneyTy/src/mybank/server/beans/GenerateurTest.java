@@ -130,6 +130,8 @@ public class GenerateurTest {
 			listeOperationReference.add(ope);
 			str = myBuff.readLine();
 		}
+		
+		myBuff.close();
 
 		for (User usr : listeUser) {
 			int nbMouvement = new Double(Math.random() * 100).intValue();
@@ -310,7 +312,7 @@ public class GenerateurTest {
 
 	}
 
-	private static String completePar0(String s, int len)
+	public static String completePar0(String s, int len)
 
 	{
 
