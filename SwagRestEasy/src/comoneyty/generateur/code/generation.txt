@@ -1,0 +1,12 @@
+Nom;Dépendance;
+Contact
+Depense
+Event;User-Depense-HistoriqueEvent-Mouvement
+HistoriqueEvent
+Invitation
+LienEventUser
+Message
+Mouvement
+Operation
+Relation
+User;Event-Invitation-Relation

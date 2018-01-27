@@ -1,0 +1,74 @@
+{
+	"resourcePackages": [
+		"comoneyty.server.rest"
+	],
+	"prettyPrint": true,
+	"cacheTTL": 0,
+	"openAPI": {
+		"info": {
+			"version": "1.0",
+			"title": "API ComoneyTy",
+			"description": "Listes des API CoMoneyTy",
+			"contact": {
+				"email": "herve.combey@labanquepostale.fr"
+			}
+		},
+		"tags": [
+			{
+				"name": "Login",
+				"description": "Permet l'authentification initiale d'un utilisateur en fournissant le token nécessaire pour accéder aux APIs"
+			},
+			{
+				"name": "Event",
+				"description": "Objet qui décrit un évènement, c'est le point d'entrée de CoMoneyTy"
+			},
+			{
+				"name": "User",
+				"description": "Objet qui contient toutes les informations d'un utilisateur CoMoneyTy"
+			},
+			{
+				"name": "LienEventUser",
+				"description": "Objet permettant de faire le lien entre un Event et un utilisateur (Relation n-n)"
+			},
+			{
+				"name": "Eurobits",
+				"description": "Test Eurobits"
+			},
+			{
+				"name": "Relation",
+				"description": "Objet permettant de faire la relation entre deux User CoMoneyTy (Relation n-n)"
+			},
+			{
+				"name": "Message",
+				"description": "Objet pour la messagerie interne CoMoneyTy"
+			}
+		],
+		"servers": [
+			{
+				"description": "Serveur de Production",
+				"url": "http://vulcanjibe.ddns.net:8080/SwagRestEasy-0.0.1-SNAPSHOT"
+			},
+			{
+				"description": "Serveur de Qualification",
+				"url": "http://vulcanjibe.ddns.net:8080/SwagRestEasy-0.0.2-SNAPSHOT"
+			}
+		],
+		"security": [
+			{
+				"bearerAuth": []
+			}
+		],
+		"components": {
+			"schemas": {
+				
+			},
+			"securitySchemes": {
+				"bearerAuth": {
+					"type": "http",
+					"scheme": "bearer",
+					"bearerFormat": "JWT"
+				}
+			}
+		}
+	}
+}
